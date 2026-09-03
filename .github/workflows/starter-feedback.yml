@@ -1,0 +1,47 @@
+# Public formative feedback. Final grading repeats critical checks in an
+# instructor-controlled, disposable checkout fixed to the submitted SHA.
+name: Starter Public Feedback
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: starter-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-feedback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+          cache: npm
+      - name: Reproducible install
+        run: npm ci
+      - name: TypeScript build check
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Public smoke tests
+        run: npm run test:smoke
+      - name: Public dependency gate
+        run: npm run audit:ci
+      - name: Expo Android bundle
+        run: npm run bundle:release
+      - name: Upload public build
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: starter-public-build
+          if-no-files-found: warn
+          path: dist/export/**

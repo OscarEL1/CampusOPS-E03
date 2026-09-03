@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "weeks": {
+    "01": {"required": ["docs/problem-definition.md", "docs/risk-register.md", "reports/week-01/baseline.json", "evidence/week-01/engineering.json", "evidence/week-01/individual.json"]},
+    "02": {"required": ["docs/adr/ADR-001-architecture.md", "docs/architecture.mmd", "reports/week-02/dependencies.json", "evidence/week-02/engineering.json", "evidence/week-02/individual.json"]},
+    "03": {"required": [".github/workflows/week-03-ci-amenazas-feedback.yml", "docs/threat-model.md", "reports/week-03/security.json", "evidence/week-03/engineering.json", "evidence/week-03/individual.json"]},
+    "04": {"required": ["docs/security-controls.md", "reports/week-04/secret-scan.json", "reports/week-04/negative-tests.json", "evidence/week-04/engineering.json", "evidence/week-04/individual.json"]},
+    "05": {"required": ["docs/api-contract.md", "reports/week-05/contract-tests.json", "reports/week-05/failure-matrix.json", "evidence/week-05/engineering.json", "evidence/week-05/individual.json"]},
+    "06": {"required": ["docs/session-state-machine.mmd", "reports/week-06/auth-tests.json", "reports/week-06/concurrency.json", "evidence/week-06/engineering.json", "evidence/week-06/individual.json"]},
+    "08": {"required": ["docs/data-model.md", "docs/sync-policy.md", "reports/week-08/migration-tests.json", "evidence/week-08/engineering.json", "evidence/week-08/individual.json"]},
+    "09": {"required": ["docs/resilience-policy.md", "reports/week-09/fault-injection.json", "reports/week-09/retry-metrics.json", "evidence/week-09/engineering.json", "evidence/week-09/individual.json"]},
+    "10": {"required": ["docs/ui-state-machine.mmd", "reports/week-10/ui-tests.json", "reports/week-10/log-sanitization.json", "evidence/week-10/engineering.json", "evidence/week-10/individual.json"]},
+    "11": {"required": ["docs/test-strategy.md", "reports/week-11/debug-release.json", "reports/week-11/defect-trace.json", "evidence/week-11/engineering.json", "evidence/week-11/individual.json"]},
+    "12": {"required": ["docs/permission-matrix.md", "reports/week-12/permission-tests.json", "reports/week-12/release-provenance.json", "evidence/week-12/engineering.json", "evidence/week-12/individual.json"]},
+    "13": {"required": ["release/release-dossier.md", "release/checksums.txt", "reports/week-13/artifact-inspection.json", "evidence/week-13/engineering.json", "evidence/week-13/individual.json"]}
+  }
+}

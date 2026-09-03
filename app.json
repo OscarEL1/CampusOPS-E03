@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "CampusOps",
+    "slug": "dmi-engineering-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "android": {
+      "package": "mx.edu.dmi.engineeringapp"
+    },
+    "ios": {
+      "bundleIdentifier": "mx.edu.dmi.engineeringapp"
+    }
+  }
+}
