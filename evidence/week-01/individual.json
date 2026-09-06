@@ -1,0 +1,41 @@
+{
+  "_instructions": "Eliminen este campo cuando terminen. Conserven exactamente tres integrantes y usen SHA Git completos de commits creados por cada persona.",
+  "schemaVersion": 1,
+  "week": 1,
+  "teamId": "REEMPLAZAR_CON_ID_DEL_EQUIPO",
+  "members": [
+    {
+      "studentId": "REEMPLAZAR_INTEGRANTE_1",
+      "commitShas": ["REEMPLAZAR_CON_SHA_COMPLETO"],
+      "files": ["REEMPLAZAR_CON_ARCHIVO_TRABAJADO"],
+      "tests": [],
+      "reviews": [],
+      "prediction": "REEMPLAZAR_CON_LO_QUE_ESPERABA_OBSERVAR",
+      "command": "REEMPLAZAR_CON_EL_COMANDO_EJECUTADO",
+      "observedResult": "REEMPLAZAR_CON_LO_QUE_OCURRIO",
+      "explanation": "REEMPLAZAR_CON_LA_EXPLICACION_TECNICA"
+    },
+    {
+      "studentId": "REEMPLAZAR_INTEGRANTE_2",
+      "commitShas": ["REEMPLAZAR_CON_SHA_COMPLETO"],
+      "files": ["REEMPLAZAR_CON_ARCHIVO_TRABAJADO"],
+      "tests": [],
+      "reviews": [],
+      "prediction": "REEMPLAZAR_CON_LO_QUE_ESPERABA_OBSERVAR",
+      "command": "REEMPLAZAR_CON_EL_COMANDO_EJECUTADO",
+      "observedResult": "REEMPLAZAR_CON_LO_QUE_OCURRIO",
+      "explanation": "REEMPLAZAR_CON_LA_EXPLICACION_TECNICA"
+    },
+    {
+      "studentId": "REEMPLAZAR_INTEGRANTE_3",
+      "commitShas": ["REEMPLAZAR_CON_SHA_COMPLETO"],
+      "files": ["REEMPLAZAR_CON_ARCHIVO_TRABAJADO"],
+      "tests": [],
+      "reviews": [],
+      "prediction": "REEMPLAZAR_CON_LO_QUE_ESPERABA_OBSERVAR",
+      "command": "REEMPLAZAR_CON_EL_COMANDO_EJECUTADO",
+      "observedResult": "REEMPLAZAR_CON_LO_QUE_OCURRIO",
+      "explanation": "REEMPLAZAR_CON_LA_EXPLICACION_TECNICA"
+    }
+  ]
+}

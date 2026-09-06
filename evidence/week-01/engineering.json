@@ -1,0 +1,20 @@
+{
+  "_instructions": "Eliminen este campo cuando terminen. Comparen alternativas reales y relacionen la decisión con una comprobación ejecutada.",
+  "schemaVersion": 1,
+  "week": 1,
+  "commitSha": "REEMPLAZAR_CON_SHA_DEL_COMMIT_DE_CODIGO_Y_DOCUMENTOS",
+  "decision": "REEMPLAZAR_CON_LA_DECISION_DE_ALCANCE_RIESGO_O_ACEPTACION",
+  "alternatives": [
+    "REEMPLAZAR_CON_PRIMERA_ALTERNATIVA_REAL",
+    "REEMPLAZAR_CON_SEGUNDA_ALTERNATIVA_REAL"
+  ],
+  "tradeoff": "REEMPLAZAR_CON_EL_BENEFICIO_Y_EL_COSTO_DE_LA_DECISION",
+  "requirementIds": ["AC-02", "AC-04"],
+  "verification": [
+    {
+      "command": "REEMPLAZAR_CON_COMANDO_EJECUTADO",
+      "result": "REEMPLAZAR_CON_RESULTADO_OBSERVADO",
+      "evidence": "REEMPLAZAR_CON_ARCHIVO_REPORTE_O_SALIDA_QUE_LO_DEMUESTRA"
+    }
+  ]
+}

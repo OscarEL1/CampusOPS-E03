@@ -1,0 +1,23 @@
+{
+  "_instructions": "Eliminen este campo cuando terminen. Los demás campos deben contener evidencia real y commitSha debe ser un SHA Git completo de 40 caracteres.",
+  "schemaVersion": 1,
+  "week": 1,
+  "commitSha": "REEMPLAZAR_CON_SHA_DEL_COMMIT_DE_CODIGO_Y_DOCUMENTOS",
+  "generatedAt": "REEMPLAZAR_CON_FECHA_HORA_ISO_8601",
+  "checks": [
+    {
+      "id": "falla-controlada",
+      "status": "fail",
+      "scenarioType": "failure",
+      "command": "npm run test:smoke",
+      "evidence": "REEMPLAZAR_CON_SINTOMA_OBSERVADO_Y_CAUSA_IDENTIFICADA"
+    },
+    {
+      "id": "correccion-verificada",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:smoke",
+      "evidence": "REEMPLAZAR_CON_RESULTADO_OBSERVABLE_DESPUES_DE_CORREGIR"
+    }
+  ]
+}
