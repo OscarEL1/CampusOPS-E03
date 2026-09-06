@@ -10,7 +10,7 @@ export default function App() {
   useEffect(() => {
     let active = true;
     getBackendHealth()
-      .then(() => active && setStatus('offline'))
+      .then(() => active && setStatus('available'))
       .catch(() => active && setStatus('offline'));
     return () => {
       active = false;
