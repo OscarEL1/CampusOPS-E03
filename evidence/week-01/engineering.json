@@ -1,20 +1,20 @@
 {
-  "_instructions": "Eliminen este campo cuando terminen. Comparen alternativas reales y relacionen la decisión con una comprobación ejecutada.",
   "schemaVersion": 1,
   "week": 1,
-  "commitSha": "REEMPLAZAR_CON_SHA_DEL_COMMIT_DE_CODIGO_Y_DOCUMENTOS",
-  "decision": "REEMPLAZAR_CON_LA_DECISION_DE_ALCANCE_RIESGO_O_ACEPTACION",
+  "commitSha": "1a8bb182cca1abee2a30e35d3fac5288d51a0db9",
+  "decision": "Durante esta semana mantendremos el alcance en la definición verificable de CampusOps y en el diagnóstico reproducible, y trataremos como riesgo prioritario el conflicto de cambios cuando un técnico trabaja sin conexión y coordinación reasigna la incidencia. Elegimos documentar el conflicto explícito como dirección técnica futura en lugar de ocultarlo con una sobrescritura automática.",
   "alternatives": [
-    "REEMPLAZAR_CON_PRIMERA_ALTERNATIVA_REAL",
-    "REEMPLAZAR_CON_SEGUNDA_ALTERNATIVA_REAL"
+    "Aplicar last-write-wins para conservar automáticamente la última actualización recibida; simplifica la sincronización, pero puede borrar el diagnóstico local o imponer una asignación obsoleta.",
+    "Rechazar cualquier cambio local con versión obsoleta y pedir al técnico que repita su trabajo; evita sobrescrituras, pero puede perder la intención pendiente y no informa suficientemente el conflicto.",
+    "Conservar una cola persistente con versión base e identidad de operación, detectar el conflicto y solicitar una resolución explícita; protege ambas intenciones, aunque requiere más estados, almacenamiento y pruebas."
   ],
-  "tradeoff": "REEMPLAZAR_CON_EL_BENEFICIO_Y_EL_COSTO_DE_LA_DECISION",
+  "tradeoff": "La opción elegida protege el diagnóstico del técnico, la reasignación de coordinación y el historial, además de permitir reintentos idempotentes sin duplicar eventos. El costo es implementar una cola recuperable, detección de conflictos y una interfaz para resolverlos; esa complejidad se acepta porque el riesgo prioritario afecta directamente la continuidad de reportar, asignar, atender y cerrar.",
   "requirementIds": ["AC-02", "AC-04"],
   "verification": [
     {
-      "command": "REEMPLAZAR_CON_COMANDO_EJECUTADO",
-      "result": "REEMPLAZAR_CON_RESULTADO_OBSERVADO",
-      "evidence": "REEMPLAZAR_CON_ARCHIVO_REPORTE_O_SALIDA_QUE_LO_DEMUESTRA"
+      "command": "make feedback",
+      "result": "TypeScript, ESLint y smoke test pasaron; la auditoría terminó con una vulnerabilidad moderada reportada por npm y el bundle Android de Expo se generó correctamente.",
+      "evidence": "La salida reproducible de make feedback en el commit 1a8bb182cca1abee2a30e35d3fac5288d51a0db9 y el riesgo prioritario documentado en docs/risk-register.md."
     }
   ]
 }

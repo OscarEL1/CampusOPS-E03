@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "week": 1,
+  "mode": "public",
+  "commitSha": "1a8bb182cca1abee2a30e35d3fac5288d51a0db9",
+  "evaluatedAt": "2026-09-07T05:50:39.917541+00:00",
+  "status": "fail",
+  "checks": [
+    {
+      "id": "base_files",
+      "status": "pass",
+      "detail": "missing=[]"
+    },
+    {
+      "id": "react_native_profile",
+      "status": "pass",
+      "detail": "missing packages=[]"
+    },
+    {
+      "id": "toolchain_scripts",
+      "status": "pass",
+      "detail": "missing scripts=[]"
+    },
+    {
+      "id": "workflow_integrity",
+      "status": "pass",
+      "detail": "bypass markers=[]"
+    },
+    {
+      "id": "secret_scan",
+      "status": "pass",
+      "detail": "hits=[]"
+    },
+    {
+      "id": "required_evidence",
+      "status": "pass",
+      "detail": "missing/empty=[]"
+    },
+    {
+      "id": "schema:reports/week-01/baseline.json",
+      "status": "pass",
+      "detail": "2 checks indexed, 1 boundary/failure; report evaluates HEAD"
+    },
+    {
+      "id": "schema:evidence/week-01/engineering.json",
+      "status": "pass",
+      "detail": "decision evidence is substantive and reproducible; report evaluates HEAD"
+    },
+    {
+      "id": "schema:evidence/week-01/individual.json",
+      "status": "fail",
+      "detail": "week must match and members must contain exactly three entries"
+    },
+    {
+      "id": "toolchain_1",
+      "status": "pass",
+      "detail": "npm run typecheck\n> dmi-react-native-starter@1.0.0 typecheck\n> tsc --noEmit"
+    },
+    {
+      "id": "toolchain_2",
+      "status": "pass",
+      "detail": "npm run lint\n> dmi-react-native-starter@1.0.0 lint\n> eslint ."
+    },
+    {
+      "id": "toolchain_3",
+      "status": "pass",
+      "detail": "npm run audit:ci\n> dmi-react-native-starter@1.0.0 audit:ci\n> npm audit --omit=dev --audit-level=critical\n\n# npm audit report\n\n@xmldom/xmldom  <=0.8.14 || 0.9.0 - 0.9.11\nSeverity: moderate\nxmldom: XML fragment injection via invalid EntityReference.nodeName during requireWellFormed serialization - https://github.com/advisories/GHSA-6gmq-8vp8-gcm6\nxmldom: XML fragment injection via invalid EntityReference.nodeName during requireWellFormed serialization - https://github.com/advisories/GHSA-6gmq-8vp8-gcm6\nfix available via `npm audit fix`\nnode_modules/@xmldom/xmldom\nnode_modules/plist/node_modules/@xmldom/xmldom\n\n1 moderate severity vulnerability\n\nTo address all issues, run:\n  npm audit fix"
+    },
+    {
+      "id": "toolchain_4",
+      "status": "pass",
+      "detail": "npm test -- --ci --runInBand course-tests/public/week-01.test.ts\n> dmi-react-native-starter@1.0.0 test\n> jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/public/week-01.test.ts\n\n\nPASS course-tests/public/week-01.test.ts (26.003 s)\n  ✓ baseline preserves the reproduced failure and its verified correction (11 ms)\n\nTest Suites: 1 passed, 1 total\nTests:       1 passed, 1 total\nSnapshots:   0 total\nTime:        30.779 s\nRan all test suites matching /course-tests\\/public\\/week-01.test.ts/i."
+    }
+  ]
+}

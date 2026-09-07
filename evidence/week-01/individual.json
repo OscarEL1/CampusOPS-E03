@@ -1,41 +1,43 @@
 {
-  "_instructions": "Eliminen este campo cuando terminen. Conserven exactamente tres integrantes y usen SHA Git completos de commits creados por cada persona.",
   "schemaVersion": 1,
   "week": 1,
-  "teamId": "REEMPLAZAR_CON_ID_DEL_EQUIPO",
+  "teamId": "Equipo-03",
   "members": [
     {
-      "studentId": "REEMPLAZAR_INTEGRANTE_1",
-      "commitShas": ["REEMPLAZAR_CON_SHA_COMPLETO"],
-      "files": ["REEMPLAZAR_CON_ARCHIVO_TRABAJADO"],
-      "tests": [],
+      "studentId": "a3523110665",
+      "commitShas": [
+        "f514f05f24337ecd18e702db6034d6f9201092c6",
+        "d7e339b6c431f9f573a2c1bd8e9d1feb4657986a",
+        "be3793a244682496797646756bc4cd9174f62a88"
+      ],
+      "files": ["App.tsx", ".github/workflows/week-01-feedback.yml"],
+      "tests": [
+        "npm run test:smoke",
+        "make feedback"
+      ],
       "reviews": [],
-      "prediction": "REEMPLAZAR_CON_LO_QUE_ESPERABA_OBSERVAR",
-      "command": "REEMPLAZAR_CON_EL_COMANDO_EJECUTADO",
-      "observedResult": "REEMPLAZAR_CON_LO_QUE_OCURRIO",
-      "explanation": "REEMPLAZAR_CON_LA_EXPLICACION_TECNICA"
+      "prediction": "La prueba smoke debe fallar si la rama exitosa del backend muestra offline, porque el contrato visual espera available; después de restaurar available, la prueba y el feedback completo deben pasar.",
+      "command": "npm run test:smoke",
+      "observedResult": "Con la falla introducida Jest recibió Backend: offline en lugar de available; después de corregir App.tsx la suite pasó con 1 prueba aprobada.",
+      "explanation": "La aportación técnica consistió en introducir una falla reversible en la resolución exitosa de getBackendHealth, identificar el síntoma, corregir la asignación de estado y verificar nuevamente typecheck, lint, smoke test, auditoría y bundle Android."
     },
     {
-      "studentId": "REEMPLAZAR_INTEGRANTE_2",
-      "commitShas": ["REEMPLAZAR_CON_SHA_COMPLETO"],
-      "files": ["REEMPLAZAR_CON_ARCHIVO_TRABAJADO"],
-      "tests": [],
+      "studentId": "AlexD39",
+      "commitShas": ["2927e68a22cf4fa1a5f996231779f1ab3b1cde28"],
+      "files": [
+        "docs/problem-definition.md",
+        "docs/risk-register.md"
+      ],
+      "tests": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run test:smoke"
+      ],
       "reviews": [],
-      "prediction": "REEMPLAZAR_CON_LO_QUE_ESPERABA_OBSERVAR",
-      "command": "REEMPLAZAR_CON_EL_COMANDO_EJECUTADO",
-      "observedResult": "REEMPLAZAR_CON_LO_QUE_OCURRIO",
-      "explanation": "REEMPLAZAR_CON_LA_EXPLICACION_TECNICA"
-    },
-    {
-      "studentId": "REEMPLAZAR_INTEGRANTE_3",
-      "commitShas": ["REEMPLAZAR_CON_SHA_COMPLETO"],
-      "files": ["REEMPLAZAR_CON_ARCHIVO_TRABAJADO"],
-      "tests": [],
-      "reviews": [],
-      "prediction": "REEMPLAZAR_CON_LO_QUE_ESPERABA_OBSERVAR",
-      "command": "REEMPLAZAR_CON_EL_COMANDO_EJECUTADO",
-      "observedResult": "REEMPLAZAR_CON_LO_QUE_OCURRIO",
-      "explanation": "REEMPLAZAR_CON_LA_EXPLICACION_TECNICA"
+      "prediction": "La definición debe describir actores, flujo y criterios observables, y el registro debe contener exactamente tres riesgos de CampusOps con prioridad, mitigación y comprobación.",
+      "command": "npm run test:smoke",
+      "observedResult": "El commit modificó únicamente los dos documentos asignados; typecheck, lint y smoke test fueron reportados como exitosos en el Pull Request integrado.",
+      "explanation": "La aportación técnica consistió en delimitar el problema y el flujo de CampusOps, formular cinco criterios verificables y priorizar tres riesgos específicos, incluyendo el conflicto de sincronización sin conexión."
     }
   ]
 }
