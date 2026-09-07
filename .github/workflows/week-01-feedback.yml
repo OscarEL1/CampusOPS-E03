@@ -1,0 +1,50 @@
+name: Week 01 Public Feedback
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - week-01-final
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: week-01-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node.js 22.22.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+          cache: npm
+      - name: Reproducible setup
+        run: make setup
+      - name: Baseline feedback
+        run: make feedback
+      - name: Week 01 verification
+        run: make verify-week-01
+      - name: Public Week 01 tests
+        run: make public-test-week-01
+      - name: Validate frozen evidence
+        if: startsWith(github.ref, 'refs/tags/week-01-final')
+        run: make evidence-week-01
+      - name: Upload academic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academic-evidence-week-01
+          if-no-files-found: warn
+          path: |
+            reports/week-01/**
+            evidence/week-01/**
