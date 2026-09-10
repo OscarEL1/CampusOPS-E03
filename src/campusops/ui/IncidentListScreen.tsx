@@ -1,6 +1,9 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Incident } from '../domain/incident';
+import { InMemoryIncidentRepository } from '../infrastructure/inMemoryIncidentRepository';
+
+void InMemoryIncidentRepository;
 
 type IncidentListScreenProps = Readonly<{
   incidents: readonly Incident[];
