@@ -1,0 +1,58 @@
+flowchart LR
+  subgraph Profiles[Perfiles]
+    Reporter[Reportante]
+    Technician[Técnico]
+    Coordination[Coordinación]
+  end
+
+  subgraph UI[UI - React Native]
+    IncidentList[IncidentListScreen]
+    IncidentDetail[IncidentDetailScreen]
+    FutureSessionUI[Pantallas de sesión - previstas]
+    FutureLocationUI[Captura de ubicación - prevista]
+  end
+
+  subgraph Application[Application]
+    IncidentQueries[createIncidentQueries<br/>listar y obtener detalle]
+    FutureSessionCases[Casos de uso de sesión - previstos]
+    FutureLocationCases[Casos de uso de ubicación - previstos]
+  end
+
+  subgraph Domain[Domain]
+    Incident[Incident]
+    IncidentPort[IncidentRepository]
+    FutureSessionPort[Puerto de sesión - previsto]
+    FutureLocationPort[Puerto de ubicación - previsto]
+  end
+
+  subgraph Infrastructure[Infrastructure]
+    MemoryRepository[InMemoryIncidentRepository]
+    FuturePersistence[Persistencia local o remota - prevista]
+    FutureSessionProvider[Proveedor de sesión - previsto]
+    FutureLocationProvider[Proveedor de ubicación - previsto]
+  end
+
+  Composition[src/app/composition.ts<br/>raíz de composición]
+
+  Reporter --> IncidentList
+  Technician --> IncidentList
+  Coordination --> IncidentList
+  IncidentList --> IncidentDetail
+  IncidentList --> IncidentQueries
+  IncidentDetail --> IncidentQueries
+  FutureSessionUI --> FutureSessionCases
+  FutureLocationUI --> FutureLocationCases
+
+  IncidentQueries --> Incident
+  IncidentQueries --> IncidentPort
+  FutureSessionCases --> FutureSessionPort
+  FutureLocationCases --> FutureLocationPort
+
+  MemoryRepository -. implementa .-> IncidentPort
+  FuturePersistence -. implementa .-> IncidentPort
+  FutureSessionProvider -. implementa .-> FutureSessionPort
+  FutureLocationProvider -. implementa .-> FutureLocationPort
+
+  Composition --> IncidentQueries
+  Composition --> MemoryRepository
+
