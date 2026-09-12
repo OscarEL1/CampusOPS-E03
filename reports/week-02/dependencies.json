@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "week": 2,
+  "commitSha": "2ad7fd8ffdd4186db6f3fd74144866119daef852",
+  "generatedAt": "2026-09-12T01:09:18.987700+00:00",
+  "status": "pass",
+  "checks": [
+    {
+      "id": "arch-boundary-ui-no-infra",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/architecture-boundaries.test.ts",
+      "evidence": "1 prueba aprobada verificando que src/campusops/ui no contiene imports hacia infrastructure."
+    },
+    {
+      "id": "arch-public-test",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-02.test.ts",
+      "evidence": "1 prueba aprobada verificando que el diagrama contiene los cuatro límites (ui, application, domain, infrastructure) sin arista directa UI → infrastructure."
+    },
+    {
+      "id": "smoke-test",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:smoke",
+      "evidence": "1 prueba aprobada verificando que App renderiza correctamente con esqueleto de arquitectura."
+    },
+    {
+      "id": "typecheck",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run typecheck",
+      "evidence": "TypeScript compila sin errores."
+    },
+    {
+      "id": "architecture-contradiction-reproduced",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "git show ba1d15c -- course-tests/architecture-boundaries.test.ts",
+      "evidence": "Se reprodujo deliberadamente la violación UI → Infrastructure en commit ba1d15c. La prueba falló detectando el import prohibido. Se corrigió en commit a10c173."
+    }
+  ]
+}

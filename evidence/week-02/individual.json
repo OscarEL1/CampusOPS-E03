@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "week": 2,
+  "teamId": "Equipo-03",
+  "members": [
+    {
+      "studentId": "a3523110665",
+      "commitShas": [
+        "d0efbe9a476541540e263bb37da80d89356eaba8",
+        "a10c1739553c44af32289cb7e405b4b600db6f66",
+        "ba1d15cc27d892a7058c698aede25f7c68fb8ac0",
+        "308216db8418ce1920f5346214b61ab155696a99"
+      ],
+      "files": [
+        "src/campusops/domain/incident.ts",
+        "src/campusops/application/incidentQueries.ts",
+        "src/campusops/infrastructure/inMemoryIncidentRepository.ts",
+        "src/app/composition.ts",
+        "src/campusops/ui/IncidentListScreen.tsx",
+        "src/campusops/ui/IncidentDetailScreen.tsx",
+        "course-tests/architecture-boundaries.test.ts",
+        "App.tsx",
+        "docs/adr/ADR-002-offline-sync.md",
+        "docs/adr/ADR-003-session.md",
+        "docs/adr/ADR-004-geolocation.md",
+        "docs/adr/ADR-005-telemetry-privacy.md",
+        "docs/adr/ADR-006-permission-lifecycle.md"
+      ],
+      "tests": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm test -- --ci --runInBand course-tests/architecture-boundaries.test.ts",
+        "npm run test:smoke"
+      ],
+      "reviews": [],
+      "prediction": "La arquitectura por capas debe permitir probar los casos de uso sin React Native; la prueba de límites debe fallar si se introduce un import UI → infrastructure y pasar después de corregirlo.",
+      "command": "npm test -- --ci --runInBand course-tests/architecture-boundaries.test.ts",
+      "observedResult": "1 prueba aprobada verificando que UI no importa infraestructura. Se reprodujo deliberadamente la violación (commit ba1d15c con import de InMemoryIncidentRepository en IncidentListScreen) y se corrigió eliminando el import (commit a10c173).",
+      "explanation": "Implementación del esqueleto de arquitectura: modelo de dominio Incident, contrato IncidentRepository, caso de uso createIncidentQueries, adaptador InMemoryIncidentRepository, composición de dependencias en src/app/composition.ts, pantallas IncidentListScreen e IncidentDetailScreen, y prueba de límites arquitectónicos. Se documentaron 5 ADRs futuros para persistencia offline, sesión, geocodificación, privacidad de telemetría y ciclo de vida de permisos."
+    },
+    {
+      "studentId": "AlexD39",
+      "commitShas": [
+        "f484d16150e774d3a82b68b81a92f9825ee04759"
+      ],
+      "files": [
+        "docs/adr/ADR-001-architecture.md",
+        "docs/architecture.mmd"
+      ],
+      "tests": [
+        "npm run typecheck",
+        "npm run lint",
+        "npm run test:smoke"
+      ],
+      "reviews": [],
+      "prediction": "El ADR debe documentar dos alternativas arquitectónicas con justificación según testabilidad, complejidad y cambio de proveedor; el diagrama debe mostrar los cuatro límites (UI, Application, Domain, Infrastructure) sin dependencia UI → infrastructure.",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-02.test.ts",
+      "observedResult": "1 prueba aprobada verificando que el diagrama contiene los cuatro límites (ui, application, domain, infrastructure) sin arista directa UI → infrastructure, y que el ADR contiene las palabras clave requeridas.",
+      "explanation": "Documentación de la arquitectura: ADR-001 comparando capas con puertos y adaptadores versus acceso directo a servicios, con justificación según testabilidad, complejidad y cambio de proveedor. Diagrama Mermaid mostrando los límites de UI, Application, Domain e Infrastructure con dependencias dirigidas, perfiles de usuario, y límites futuros de sesión, persistencia y ubicación."
+    }
+  ]
+}
