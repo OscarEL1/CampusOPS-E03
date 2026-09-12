@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "week": 2,
+  "commitSha": "2ad7fd8ffdd4186db6f3fd74144866119daef852",
+  "decision": "Elegimos arquitectura por capas con puertos y adaptadores (UI → Application → Domain ← Infrastructure) porque permite probar casos de uso sin React Native, sustituir proveedores desde la composición y verificar límites con pruebas automatizadas. La UI no depende directamente de infraestructura.",
+  "alternatives": [
+    "Organización por funcionalidad con acceso directo a servicios y almacenamiento: menor estructura inicial pero acopla la UI a proveedores específicos y dificulta el cambio de API o persistencia sin modificar pantallas.",
+    "Arquitectura por capas con puertos y adaptadores: más archivos y composición explícita pero separa responsabilidades, permite pruebas puras y cambia proveedores sin modificar pantallas ni reglas de negocio."
+  ],
+  "tradeoff": "La arquitectura por capas compra testabilidad, cambio de proveedor barato y verificabilidad de límites. Paga complejidad inicial, más contratos y disciplina de imports. Se acepta porque el proyecto crecerá durante 12 semanas con API, persistencia, sesión y ubicación.",
+  "requirementIds": ["AC-01", "AC-02", "AC-03", "AC-04"],
+  "verification": [
+    {
+      "command": "npm run typecheck",
+      "result": "TypeScript compila sin errores",
+      "evidence": "Salida vacía indica ausencia de errores de tipo en todo el proyecto."
+    },
+    {
+      "command": "npm run lint",
+      "result": "ESLint no reporta violaciones",
+      "evidence": "Salida vacía indica código limpio según las reglas configuradas."
+    },
+    {
+      "command": "npm test -- --ci --runInBand course-tests/architecture-boundaries.test.ts",
+      "result": "1 prueba aprobada: UI no importa infraestructura directamente",
+      "evidence": "Se reprodujo deliberadamente la violación UI → Infrastructure (commit ba1d15c) y se corrigió (commit a10c173). La prueba verifica que src/campusops/ui no contiene imports hacia infrastructure."
+    },
+    {
+      "command": "npm run test:smoke",
+      "result": "1 prueba aprobada: App renderiza correctamente con esqueleto de arquitectura",
+      "evidence": "CampusOps visible y backend disponible verificados después de integrar esqueleto de arquitectura por capas."
+    }
+  ]
+}

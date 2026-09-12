@@ -3,19 +3,30 @@ import { StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 import { getBackendHealth } from './src/api/courseBackend';
+import { createCampusOpsQueries } from './src/app/composition';
+import { IncidentDetailScreen } from './src/campusops/ui/IncidentDetailScreen';
+import { IncidentListScreen } from './src/campusops/ui/IncidentListScreen';
+import type { Incident } from './src/campusops/domain/incident';
 
 export default function App() {
   const [status, setStatus] = useState<'checking' | 'available' | 'offline'>('checking');
+  const [incidents, setIncidents] = useState<readonly Incident[]>([]);
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     getBackendHealth()
       .then(() => active && setStatus('available'))
       .catch(() => active && setStatus('offline'));
+    createCampusOpsQueries()
+      .listIncidents()
+      .then((items) => active && setIncidents(items));
     return () => {
       active = false;
     };
   }, []);
+
+  const selectedIncident = incidents.find((incident) => incident.id === selectedIncidentId) ?? null;
 
   return (
     <View style={styles.screen}>
@@ -24,6 +35,11 @@ export default function App() {
         <Text>Incidencias del campus · entorno académico ficticio</Text>
         <Text testID="backend-status">Backend: {status}</Text>
       </View>
+      {selectedIncident ? (
+        <IncidentDetailScreen incident={selectedIncident} onBack={() => setSelectedIncidentId(null)} />
+      ) : (
+        <IncidentListScreen incidents={incidents} onSelect={setSelectedIncidentId} />
+      )}
       <StatusBar style="auto" />
     </View>
   );
