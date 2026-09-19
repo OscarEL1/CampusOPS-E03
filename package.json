@@ -16,6 +16,7 @@
     "lint": "eslint .",
     "test": "jest --no-watchman --cacheDirectory .jest-cache",
     "test:smoke": "jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/smoke.test.tsx",
+    "test:security": "jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/security-controls.test.ts",
     "test:coverage:week11": "jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand --coverage --coverageReporters=json-summary --coverageReporters=text --collectCoverageFrom=src/course-evaluation/index.ts --coverageThreshold='{\"global\":{\"branches\":60,\"functions\":65,\"lines\":70,\"statements\":70}}' course-tests/smoke.test.tsx course-tests/public/week-01.test.ts course-tests/public/week-02.test.ts course-tests/public/week-03.test.ts course-tests/public/week-04.test.ts course-tests/public/week-05.test.ts course-tests/public/week-06.test.ts course-tests/public/week-08.test.ts course-tests/public/week-09.test.ts course-tests/public/week-10.test.ts course-tests/public/week-11.test.ts",
     "audit:ci": "npm audit --omit=dev --audit-level=critical",
     "bundle:release": "expo export --platform android --output-dir dist/export",
