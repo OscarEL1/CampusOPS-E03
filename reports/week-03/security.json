@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "week": 3,
+  "commitSha": "5fdcf9e77676c222c15126ac4cf2378285cd04d0",
+  "generatedAt": "2026-09-19T01:02:55.989143+00:00",
+  "status": "fail",
+  "checks": [
+    {
+      "id": "workflow-least-privilege",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-03.test.ts -t 'feedback workflow preserves critical checks and least privilege'",
+      "evidence": "1 prueba aprobada. El workflow declara permissions: contents: read, instala con make setup (que delega en npm ci), fija node-version 22 y no contiene marcadores de omision (|| true, continue-on-error: true, --passWithNoTests). Conserva reports/week-03 y evidence/week-03 como artefacto con if: always()."
+    },
+    {
+      "id": "threat-model-public-test",
+      "status": "fail",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-03.test.ts",
+      "evidence": "ENOENT: no such file or directory, open 'docs/threat-model.md'. El modelo de amenazas se entrega en la rama de documentacion del equipo y aun no esta integrado en esta rama. Debe volver a ejecutarse y quedar en pass en el commit final de la entrega."
+    },
+    {
+      "id": "secret-scan-clean",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "python tools/course_public_evaluator.py --week 3 --mode verify",
+      "evidence": "status=pass con secret_scan hits=[] y workflow_integrity bypass markers=[]. Codigo de salida 0."
+    },
+    {
+      "id": "control-t01-lectura-por-actor",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:security",
+      "evidence": "El reportante solo recibe campus-inc-001 que el reporto, el tecnico solo campus-inc-002 asignado a el y coordinacion recibe el backlog completo. Control en src/campusops/domain/accessPolicy.ts aplicado desde src/campusops/application/incidentQueries.ts."
+    },
+    {
+      "id": "control-t01-lectura-denegada-sin-filtracion",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:security",
+      "evidence": "getIncident sobre una incidencia ajena devuelve null, identico a un id inexistente. La respuesta no confirma que la incidencia de otro integrante exista. Un rol no reconocido recibe una lista vacia por denegacion por omision."
+    },
+    {
+      "id": "control-t02-autorizacion-de-asignacion",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:security",
+      "evidence": "Un tecnico y un reportante reciben outcome denied y el repositorio espia registra writes=[]. La autorizacion ocurre antes del repositorio, por lo que un intento denegado no deja escritura. Coordinacion escribe exactamente una vez."
+    },
+    {
+      "id": "control-t03-redaccion-en-registros",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:security",
+      "evidence": "La entrada de registro serializada no contiene titulo, descripcion, ubicacion, reporterId ni el id del actor. Solo id, category, status y el rol del actor. redactIncidentForLog usa lista de permitidos, no lista de exclusion."
+    },
+    {
+      "id": "control-t04-sin-credencial-en-el-repositorio",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:security",
+      "evidence": "readBackendApiSecret lanza error con valor ausente o en blanco y no existe valor por omision en el repositorio. Ningun archivo rastreado por git coincide con los patrones de credencial de tools/course_public_evaluator.py; hits=[]."
+    },
+    {
+      "id": "falla-01-credencial-en-el-repositorio",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "git show 1925944a1d5631917d52043a5b55217b21f604e5 -- src/config/backendConfig.ts",
+      "evidence": "Falla obligatoria reproducida en el commit 1925944. El evaluador reporto status=fail con secret_scan hits=['src/config/backendConfig.ts:public_secret_name'] y npm run test:security fallo T-04, ambos con codigo de salida 1. Corregido en el commit 42a5aa85233630fc43e94fee8a3e7f83bdf96279 exigiendo la variable del entorno. Diagnostico y resultado corregido en reports/week-03/failure-01-leaked-credential.log. Valor ficticio; nunca fue una credencial real."
+    },
+    {
+      "id": "falla-02-regresion-de-politica-de-acceso",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "git show f9293a7f769f3d322314cc10f8817cce488a706c -- src/campusops/application/incidentQueries.ts",
+      "evidence": "Regresion reproducida en el commit f9293a7 retirando canViewIncident de listIncidents. npm run typecheck y npm run lint salieron 0 sin observarla; npm run test:security fallo 3 de 12 con codigo de salida 1: el reportante recibio campus-inc-002 de otro integrante. Corregido en el commit 5fdcf9e. Diagnostico y resultado corregido en reports/week-03/failure-02-access-policy.log."
+    },
+    {
+      "id": "frontera-arquitectonica-ui-sin-infraestructura",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/architecture-boundaries.test.ts",
+      "evidence": "1 prueba aprobada. El control de la semana 02 sigue activo: src/campusops/ui no importa infrastructure. Avanzar de semana no desactivo la comprobacion anterior."
+    }
+  ]
+}
