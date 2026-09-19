@@ -8,11 +8,9 @@ export type IncidentQueries = Readonly<{
 
 export function createIncidentQueries(repository: IncidentRepository): IncidentQueries {
   return {
-    async listIncidents(_actor) {
-      // Regression under test: the backlog is returned without applying the
-      // access policy, the shape of change that happens when an empty list is
-      // "fixed" by dropping the filter.
-      return repository.list();
+    async listIncidents(actor) {
+      const incidents = await repository.list();
+      return incidents.filter((incident) => canViewIncident(actor, incident));
     },
     async getIncident(actor, id) {
       const incident = await repository.getById(id);
