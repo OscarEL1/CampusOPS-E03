@@ -1,0 +1,33 @@
+# AC-03 declared failure 02 — access policy dropped from the incident list
+
+Fictional data only.
+
+## Diagnosis — broken state
+
+listIncidents returns repository.list() without applying canViewIncident.
+
+$ npm run typecheck   -> exit code 0
+$ npm run lint        -> exit code 0
+Type checking and style do not observe this regression. Only the control
+test does, which is why each threat in the model is tied to a test.
+
+$ npm run test:security
+    × a reporter only lists the incidents they reported (4 ms)
+    × a technician only lists the incidents assigned to them (1 ms)
+    × an unrecognised role is denied by default (1 ms)
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 9 passed, 12 total
+
+A reporter received campus-inc-002, reported by campus-reporter-202, and a
+technician received campus-inc-001, which is not assigned to them. An
+unrecognised role also received the whole backlog instead of nothing.
+exit code: 1
+
+## Corrected result
+
+listIncidents applies canViewIncident again before returning the list.
+
+$ npm run test:security
+Test Suites: 1 passed, 1 total
+Tests:       12 passed, 12 total
+exit code: 0

@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 import { getBackendHealth } from './src/api/courseBackend';
-import { createCampusOpsQueries } from './src/app/composition';
+import { CURRENT_ACTOR, createCampusOpsApp } from './src/app/composition';
 import { IncidentDetailScreen } from './src/campusops/ui/IncidentDetailScreen';
 import { IncidentListScreen } from './src/campusops/ui/IncidentListScreen';
 import type { Incident } from './src/campusops/domain/incident';
@@ -18,8 +18,8 @@ export default function App() {
     getBackendHealth()
       .then(() => active && setStatus('available'))
       .catch(() => active && setStatus('offline'));
-    createCampusOpsQueries()
-      .listIncidents()
+    createCampusOpsApp()
+      .queries.listIncidents(CURRENT_ACTOR)
       .then((items) => active && setIncidents(items));
     return () => {
       active = false;
