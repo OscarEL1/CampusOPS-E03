@@ -1,11 +1,20 @@
 /**
  * Access configuration for the course backend.
  *
- * The fallback below keeps the app working on a machine that has no
- * environment file configured yet.
+ * The secret is read from the environment only. There is no in-repository
+ * fallback on purpose: a missing value fails loudly instead of shipping a
+ * credential inside the bundle and the git history. The expected variable
+ * name is documented in .env.example, which carries the name without a value.
  */
-const EXPO_PUBLIC_API_SECRET = 'campus-demo-6f2a41d9e07b4c58';
+
+/** Pure validation, so the rule can be tested without touching the process. */
+export function readBackendApiSecret(rawValue: string | undefined): string {
+  if (rawValue === undefined || rawValue.trim() === '') {
+    throw new Error('Missing backend API secret; copy .env.example to .env and set it locally');
+  }
+  return rawValue;
+}
 
 export function getBackendApiSecret(): string {
-  return process.env.EXPO_PUBLIC_API_SECRET ?? EXPO_PUBLIC_API_SECRET;
+  return readBackendApiSecret(process.env.EXPO_PUBLIC_API_SECRET);
 }
