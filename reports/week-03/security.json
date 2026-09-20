@@ -1,30 +1,30 @@
 {
   "schemaVersion": 1,
   "week": 3,
-  "commitSha": "5fdcf9e77676c222c15126ac4cf2378285cd04d0",
-  "generatedAt": "2026-09-19T01:02:55.989143+00:00",
-  "status": "fail",
+  "commitSha": "ee1e09a7f1076f481449a83dc3f18f4aca187689",
+  "generatedAt": "2026-09-20T08:37:05.392767+00:00",
+  "status": "pass",
   "checks": [
     {
       "id": "workflow-least-privilege",
       "status": "pass",
       "scenarioType": "nominal",
-      "command": "npm test -- --ci --runInBand course-tests/public/week-03.test.ts -t 'feedback workflow preserves critical checks and least privilege'",
-      "evidence": "1 prueba aprobada. El workflow declara permissions: contents: read, instala con make setup (que delega en npm ci), fija node-version 22 y no contiene marcadores de omision (|| true, continue-on-error: true, --passWithNoTests). Conserva reports/week-03 y evidence/week-03 como artefacto con if: always()."
+      "command": "npm test -- --ci --runInBand course-tests/public/week-03.test.ts",
+      "evidence": "Codigo de salida 0. El workflow declara permissions: contents: read, instala con make setup (que delega en npm ci), fija node-version 22 y no contiene marcadores de omision (|| true, continue-on-error: true, --passWithNoTests). Conserva reports/week-03 y evidence/week-03 como artefacto con if: always()."
     },
     {
       "id": "threat-model-public-test",
-      "status": "fail",
-      "scenarioType": "boundary",
+      "status": "pass",
+      "scenarioType": "nominal",
       "command": "npm test -- --ci --runInBand course-tests/public/week-03.test.ts",
-      "evidence": "ENOENT: no such file or directory, open 'docs/threat-model.md'. El modelo de amenazas se entrega en la rama de documentacion del equipo y aun no esta integrado en esta rama. Debe volver a ejecutarse y quedar en pass en el commit final de la entrega."
+      "evidence": "2 de 2 pruebas aprobadas sobre el commit ee1e09a. La prueba encontro docs/threat-model.md con los conceptos activo, amenaza, control y verificacion. En una ejecucion anterior, sin ese archivo, la misma prueba fallaba con ENOENT."
     },
     {
       "id": "secret-scan-clean",
       "status": "pass",
       "scenarioType": "nominal",
       "command": "python tools/course_public_evaluator.py --week 3 --mode verify",
-      "evidence": "status=pass con secret_scan hits=[] y workflow_integrity bypass markers=[]. Codigo de salida 0."
+      "evidence": "secret_scan hits=[] y workflow_integrity bypass markers=[] sobre el arbol final. Ningun archivo rastreado contiene un patron de credencial."
     },
     {
       "id": "control-t01-lectura-por-actor",
@@ -52,7 +52,7 @@
       "status": "pass",
       "scenarioType": "boundary",
       "command": "npm run test:security",
-      "evidence": "La entrada de registro serializada no contiene titulo, descripcion, ubicacion, reporterId ni el id del actor. Solo id, category, status y el rol del actor. redactIncidentForLog usa lista de permitidos, no lista de exclusion."
+      "evidence": "La entrada de registro serializada no contiene titulo, descripcion, ubicacion, reporterId ni el id del actor. Solo id, category, status y el rol. redactIncidentForLog usa lista de permitidos, no lista de exclusion."
     },
     {
       "id": "control-t04-sin-credencial-en-el-repositorio",
@@ -80,7 +80,14 @@
       "status": "pass",
       "scenarioType": "nominal",
       "command": "npm test -- --ci --runInBand course-tests/architecture-boundaries.test.ts",
-      "evidence": "1 prueba aprobada. El control de la semana 02 sigue activo: src/campusops/ui no importa infrastructure. Avanzar de semana no desactivo la comprobacion anterior."
+      "evidence": "1 prueba aprobada con codigo de salida 0. El control de la semana 02 sigue activo: src/campusops/ui no importa infrastructure. Avanzar de semana no desactivo la comprobacion anterior."
+    },
+    {
+      "id": "toolchain-obligatorio-en-la-version-final",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run typecheck && npm run lint && npm run audit:ci && npm run test:smoke",
+      "evidence": "Los cuatro comandos salieron con codigo 0 sobre el commit ee1e09a. typecheck y lint sin errores; audit:ci sin avisos criticos (2 de severidad alta conocidas y documentadas en SECURITY.md, por debajo del umbral critical); test:smoke 1 de 1 aprobada."
     }
   ]
 }

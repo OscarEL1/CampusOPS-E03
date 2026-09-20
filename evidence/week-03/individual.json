@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "week": 3,
+  "teamId": "Equipo-03",
+  "note": "El equipo esta integrado por dos personas. El profesor autorizo de forma explicita trabajar y entregar en equipo de dos para esta actividad. El contrato de evidencias exige exactamente tres registros en members, por lo que esa comprobacion de esquema falla de forma conocida y declarada. No se agrego un tercer integrante porque la guia de entrega prohibe identidades inventadas o compartidas. Los dos registros siguientes corresponden a personas reales con su identidad Git registrada.",
+  "members": [
+    {
+      "studentId": "a3523110665",
+      "commitShas": [
+        "b536bc04932bae867fee949ecac1a02a78e7b2dc",
+        "7a2a9a912eaccda5809c836711bff45474849f4b",
+        "0612ef35dd8affbb2e732e2f6d3933378259c7b9",
+        "7edc61bf7d7f3ce4433aaadf5a0cd6482f97877f",
+        "1925944a1d5631917d52043a5b55217b21f604e5",
+        "42a5aa85233630fc43e94fee8a3e7f83bdf96279",
+        "f9293a7f769f3d322314cc10f8817cce488a706c",
+        "5fdcf9e77676c222c15126ac4cf2378285cd04d0",
+        "3bf6064a9e6f8d60a88e4895b6318326601c3e5e",
+        "11267dda706d67129482f3f4541a988f355fbee4"
+      ],
+      "files": [
+        ".github/workflows/week-03-ci-amenazas-feedback.yml",
+        "src/campusops/domain/accessPolicy.ts",
+        "src/campusops/domain/logRedaction.ts",
+        "src/campusops/application/incidentQueries.ts",
+        "src/campusops/application/incidentAssignments.ts",
+        "src/campusops/application/incidentLogging.ts",
+        "src/campusops/infrastructure/inMemoryIncidentRepository.ts",
+        "src/config/backendConfig.ts",
+        "src/app/composition.ts",
+        "course-tests/security-controls.test.ts",
+        "reports/week-03/security.json",
+        "reports/week-03/failure-01-leaked-credential.log",
+        "reports/week-03/failure-02-access-policy.log"
+      ],
+      "tests": [
+        "npm run test:security",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run audit:ci",
+        "npm run test:smoke",
+        "npm test -- --ci --runInBand course-tests/architecture-boundaries.test.ts"
+      ],
+      "reviews": [
+        "Pull request #6 docs/alejandro-week03-threat-model: revision del modelo de amenazas frente a los controles implementados, ejecucion de la prueba publica y de la suite de controles sobre esa rama, e integracion a main."
+      ],
+      "prediction": "Cada amenaza priorizada debe quedar ligada a un control en codigo y a una prueba que falle cuando el control se retira. Esperaba que el escaneo de secretos detuviera el proceso ante una credencial incrustada, y que la revision de tipos y el estilo no observaran una regresion de la politica de acceso, porque ninguna de las dos razona sobre autorizacion.",
+      "command": "npm run test:security",
+      "observedResult": "12 pruebas aprobadas con codigo de salida 0 sobre el commit ee1e09a7f1076f481449a83dc3f18f4aca187689. Se reprodujeron dos fallas reales. En el commit 1925944a1d5631917d52043a5b55217b21f604e5 una credencial ficticia incrustada hizo que el evaluador reportara secret_scan hits=['src/config/backendConfig.ts:public_secret_name'] con codigo de salida 1; corregida en 42a5aa85233630fc43e94fee8a3e7f83bdf96279. En el commit f9293a7f769f3d322314cc10f8817cce488a706c se retiro canViewIncident de listIncidents: npm run typecheck y npm run lint salieron 0 sin detectarla, mientras npm run test:security fallo 3 de 12 mostrando al reportante recibiendo campus-inc-002 de otro integrante; corregida en 5fdcf9e77676c222c15126ac4cf2378285cd04d0.",
+      "explanation": "Integre el paquete de la semana 03 y conserve el workflow con permissions: contents: read, agregando el ref y fetch-depth: 2 que el evaluador necesita para resolver HEAD^, y ordenando el paso de controles antes de la comprobacion publica. Implemente los cuatro controles del modelo de amenazas: politica de acceso por actor con denegacion por omision en src/campusops/domain/accessPolicy.ts, autorizacion de reasignacion antes de tocar el repositorio en src/campusops/application/incidentAssignments.ts, construccion de entradas de registro por lista de permitidos en src/campusops/domain/logRedaction.ts, y exigencia del secreto desde el entorno sin valor por omision en src/config/backendConfig.ts. Escribi las 12 pruebas de course-tests/security-controls.test.ts que los verifican y documente el diagnostico y el resultado corregido de las dos fallas declaradas en reports/week-03."
+    },
+    {
+      "studentId": "AlexD39",
+      "commitShas": [
+        "4eb52051a9e10b21f57c1d7f7fce1340d947cbd2",
+        "76480fb0a83e0ca3283845f15570c1d8d3ab1d9d"
+      ],
+      "files": [
+        "docs/threat-model.md",
+        "docs/risk-register.md",
+        "evidence/week-03/engineering.json"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand course-tests/public/week-03.test.ts",
+        "npm run test:security"
+      ],
+      "reviews": [],
+      "prediction": "El modelo de amenazas debe vincular cada activo y frontera de confianza con una amenaza priorizada, un control ya implementado y una prueba que lo verifique, y la prueba publica de la semana debe encontrar el documento y los conceptos de activo, amenaza, control y verificacion. Esperaba que declarar el riesgo residual de cada control fuera necesario, porque la politica corre en el cliente y la identidad todavia es fija.",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-03.test.ts",
+      "observedResult": "Codigo de salida 0 con 1 suite y 2 pruebas aprobadas despues del commit de documentacion. La prueba publica encontro docs/threat-model.md y sus conceptos de activo, amenaza, control y verificacion, y aprobo la comprobacion del workflow. Ademas npm run test:security salio 0 con 12 pruebas aprobadas, confirmando que los controles citados en el modelo estaban vigentes al escribirlo.",
+      "explanation": "Escribi docs/threat-model.md con los activos, las tres fronteras de confianza y las cuatro amenazas priorizadas, cada una con su control y su ubicacion en el codigo, la prueba que la verifica, la justificacion de probabilidad e impacto y el riesgo residual que permanece. Actualice docs/risk-register.md para separar la prioridad de seguridad de la semana 03 de la prioridad operativa de sincronizacion y aclarar que las mitigaciones descritas son estado objetivo y no todas estan implementadas. Redacte evidence/week-03/engineering.json justificando atender primero la consulta de incidencias ajenas frente a validar solo en el backend o cifrar unicamente el almacenamiento local."
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 3,
-  "commitSha": "4eb52051a9e10b21f57c1d7f7fce1340d947cbd2",
+  "commitSha": "ee1e09a7f1076f481449a83dc3f18f4aca187689",
   "decision": "Atendemos primero la consulta de incidencias ajenas (T-01) porque cualquier perfil puede intentar una lectura por lista o por identificador y una respuesta indebida expone datos de terceros. Aplicamos una política de acceso por actor en el dominio y la usamos en las consultas de la capa de aplicación; la denegación por omisión y la respuesta null para una lectura ajena reducen la exposición y evitan confirmar que la incidencia existe.",
   "alternatives": [
     "Validar la lectura solo en el backend del curso: centralizaría la autorización de red, pero no protegería incidencias ya disponibles en la aplicación ni comprobaría las consultas del repositorio local. La identidad ficticia del backend didáctico tampoco equivale a una sesión de producción.",
