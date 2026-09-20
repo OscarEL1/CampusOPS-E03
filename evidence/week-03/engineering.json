@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "week": 3,
+  "commitSha": "4eb52051a9e10b21f57c1d7f7fce1340d947cbd2",
+  "decision": "Atendemos primero la consulta de incidencias ajenas (T-01) porque cualquier perfil puede intentar una lectura por lista o por identificador y una respuesta indebida expone datos de terceros. Aplicamos una política de acceso por actor en el dominio y la usamos en las consultas de la capa de aplicación; la denegación por omisión y la respuesta null para una lectura ajena reducen la exposición y evitan confirmar que la incidencia existe.",
+  "alternatives": [
+    "Validar la lectura solo en el backend del curso: centralizaría la autorización de red, pero no protegería incidencias ya disponibles en la aplicación ni comprobaría las consultas del repositorio local. La identidad ficticia del backend didáctico tampoco equivale a una sesión de producción.",
+    "Cifrar únicamente el almacenamiento local: ayudaría frente a la pérdida del dispositivo, pero no impediría que un perfil consultara incidencias ajenas dentro de la aplicación."
+  ],
+  "tradeoff": "La política en el dominio ofrece una regla reutilizable y comprobable para lista y detalle; el costo es pasar el actor explícitamente a cada consulta. Como src/app/composition.ts todavía fija una identidad ficticia, este control no sustituye una sesión real ni la autorización de cada operación en el servidor.",
+  "requirementIds": ["AC-02", "AC-04"],
+  "verification": [
+    {
+      "command": "npm test -- --ci --runInBand course-tests/public/week-03.test.ts",
+      "result": "Código de salida 0; 1 suite y 2 pruebas aprobadas después del commit de documentación.",
+      "evidence": "La prueba pública encontró docs/threat-model.md y sus conceptos de activo, amenaza, control y verificación; también aprobó la comprobación del workflow existente."
+    },
+    {
+      "command": "npm run test:security",
+      "result": "Código de salida 0; 1 suite y 12 pruebas aprobadas después del commit de documentación.",
+      "evidence": "course-tests/security-controls.test.ts aprobó T-01 (5 pruebas), T-02 (4), T-03 (1) y T-04 (2). En T-01 se comprobó que una lectura ajena devuelve null igual que un ID inexistente y que un rol desconocido no recibe incidencias."
+    }
+  ]
+}
