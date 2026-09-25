@@ -7,13 +7,18 @@ import type {
   SyncRecord,
 } from './contracts';
 import type { IncidentLocation } from '../campusops/contracts';
+import { redactSensitive } from '../campusops/domain/logRedaction';
 
 function pending(name: string): never {
   throw new Error(`${name} must be implemented in the assigned week`);
 }
 
-export function redactForTelemetry(_input: unknown): unknown {
-  return pending('redactForTelemetry');
+/**
+ * Week 04 adapter. It delegates to the CampusOps domain rule so the evaluated
+ * behaviour and the behaviour the app relies on are the same code path.
+ */
+export function redactForTelemetry(input: unknown): unknown {
+  return redactSensitive(input);
 }
 
 export function parseRemoteResource(_input: unknown): ParseResult {
