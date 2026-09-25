@@ -35,6 +35,8 @@ jobs:
         run: npm run bundle:release
       - name: AC-01 — reproducibility
         run: make verify-week-04
+      - name: Week 04 security and negative checks
+        run: npm run test:security && npm run test:negative
       - name: AC-02 — public behavior
         run: make public-test-week-04
       - name: AC-03 — declared failure evidence
