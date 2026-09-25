@@ -91,9 +91,7 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
  */
 export function redactSensitive(value: unknown): unknown {
   if (Array.isArray(value)) {
-    // Regresion bajo prueba: la lista se devuelve tal cual para "evitar copias
-    // innecesarias". Los registros que viajan dentro de ella dejan de sanearse.
-    return value;
+    return value.map((item) => redactSensitive(item));
   }
 
   if (!isPlainRecord(value)) {
