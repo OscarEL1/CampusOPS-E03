@@ -1,0 +1,35 @@
+Evidencia del hallazgo 1 — 2026-09-24
+
+Comando: npm run typecheck
+Resultado: código de salida 0
+
+> dmi-react-native-starter@1.0.0 typecheck
+> tsc --noEmit
+
+Comando: npm run test:security
+Resultado: código de salida 0
+
+> dmi-react-native-starter@1.0.0 test:security
+> jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/security-controls.test.ts
+
+PASS course-tests/security-controls.test.ts
+  T-01 reading another member incident
+    PASS a reporter only lists the incidents they reported
+    PASS a technician only lists the incidents assigned to them
+    PASS coordination lists the whole backlog
+    PASS a denied read is indistinguishable from an unknown id
+    PASS an unrecognised role is denied by default
+  T-02 altering an assignment
+    PASS a technician cannot reassign and the attempt reaches no write
+    PASS a reporter cannot reassign their own incident
+    PASS coordination reassigns and the write is recorded once
+    PASS an unknown incident is reported as not found
+  T-03 leaking incident data through logs
+    PASS a log entry carries no free text, location or person identifier
+  T-04 exposing credentials in the repository
+    PASS the public client environment declares no secret-like variable
+    PASS no tracked file matches a known credential pattern
+
+Test Suites: 1 passed, 1 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total

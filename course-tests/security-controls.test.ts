@@ -6,7 +6,6 @@ import { logIncidentEvent, type IncidentLogEntry } from '../src/campusops/applic
 import { createIncidentQueries } from '../src/campusops/application/incidentQueries';
 import type { CampusActor } from '../src/campusops/domain/accessPolicy';
 import type { Incident, IncidentRepository } from '../src/campusops/domain/incident';
-import { readBackendApiSecret } from '../src/config/backendConfig';
 
 const REPORTER: CampusActor = { id: 'campus-reporter-201', role: 'reporter' };
 const OTHER_REPORTER: CampusActor = { id: 'campus-reporter-202', role: 'reporter' };
@@ -164,17 +163,15 @@ describe('T-04 exposing credentials in the repository', () => {
   ];
   const SKIPPED_SUFFIXES = ['.png', '.jpg', '.jpeg', '.gif', '.zip', '.apk', '.aab'];
 
-  test('the backend secret has no in-repository fallback', () => {
-    expect(() => readBackendApiSecret(undefined)).toThrow(/Missing/);
-    expect(() => readBackendApiSecret('   ')).toThrow(/Missing/);
-    expect(readBackendApiSecret('local-only-value')).toBe('local-only-value');
+  test('the public client environment declares no secret-like variable', () => {
+    const template = readFileSync('.env.example', 'utf8');
+    expect(template).not.toMatch(SECRET_PATTERNS[3]![1]);
   });
 
   test('no tracked file matches a known credential pattern', () => {
     const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' })
       .split('\0')
       .filter((path) => path.length > 0)
-      .filter((path) => path !== '.env.example')
       .filter((path) => !SKIPPED_SUFFIXES.some((suffix) => path.toLowerCase().endsWith(suffix)));
 
     expect(tracked.length).toBeGreaterThan(0);

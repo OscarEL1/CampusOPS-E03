@@ -1,9 +1,10 @@
 import { spawn } from 'node:child_process';
 import { testCampusOps } from './campusops-self-test.mjs';
 
+const allowedOrigin = 'http://localhost:8081';
 const child = spawn(process.execPath, ['course-backend/server.mjs'], {
   cwd: process.cwd(),
-  env: { ...process.env, COURSE_BACKEND_PORT: '0' },
+  env: { ...process.env, COURSE_BACKEND_PORT: '0', COURSE_BACKEND_ALLOWED_ORIGINS: allowedOrigin },
   stdio: ['ignore', 'pipe', 'inherit'],
 });
 
@@ -29,6 +30,20 @@ async function expectStatus(path, status, init) {
 try {
   const health = await expectStatus('/health', 200);
   if (health.contractVersion !== 1) throw new Error('health contract mismatch');
+  const allowedCors = await fetch(`${baseUrl}/health`, { headers: { Origin: allowedOrigin } });
+  if (allowedCors.headers.get('access-control-allow-origin') !== allowedOrigin) {
+    throw new Error('allowed CORS origin was not returned');
+  }
+  const deniedCors = await fetch(`${baseUrl}/health`, { headers: { Origin: 'https://untrusted.example' } });
+  if (deniedCors.headers.has('access-control-allow-origin')) {
+    throw new Error('untrusted CORS origin received an allow header');
+  }
+  await expectStatus('/health', 403, { method: 'OPTIONS', headers: { Origin: 'https://untrusted.example' } });
+  const allowedPreflight = await fetch(`${baseUrl}/health`, { method: 'OPTIONS', headers: { Origin: allowedOrigin } });
+  if (allowedPreflight.status !== 204 || allowedPreflight.headers.get('access-control-allow-origin') !== allowedOrigin) {
+    throw new Error('allowed CORS preflight failed');
+  }
+  process.stdout.write('CORS allowlist: allowed origin PASS; untrusted origin blocked PASS.\n');
   await expectStatus('/v1/resources', 401);
   const resources = await expectStatus('/v1/resources', 200, {
     headers: { Authorization: 'Bearer course-valid-token', 'X-Course-Scenario': 'nullable' },

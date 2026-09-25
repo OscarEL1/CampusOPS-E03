@@ -1,0 +1,24 @@
+Evidencia del hallazgo 2 — 2026-09-24
+
+Comando: node --check course-backend/server.mjs
+Resultado: código de salida 0
+
+Comando: npm run backend:self-test
+Resultado: código de salida 0
+
+> dmi-react-native-starter@1.0.0 backend:self-test
+> node course-backend/self-test.mjs
+
+CORS allowlist: allowed origin PASS; untrusted origin blocked PASS.
+CampusOps backend contracts: roles, reassignment conflict, lost response, idempotency, evidence and geocoding PASS.
+Controlled backend self-test passed.
+
+Comando: npm run typecheck
+Resultado: código de salida 0
+
+Comando: npm run test:security
+Resultado: código de salida 0
+
+Test Suites: 1 passed, 1 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total
