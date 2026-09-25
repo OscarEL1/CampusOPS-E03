@@ -14,7 +14,7 @@ EXPO_PUBLIC_API_SECRET[*]=demo_key_ficticio_no_real
     un signo igual. En el .env real no existe ese marcador.
 
 $ git check-ignore -v .env
-.gitignore:8:.env	.env
+.gitignore:8:.env   .env
 
 == 2. Construccion del paquete de cliente ==
 

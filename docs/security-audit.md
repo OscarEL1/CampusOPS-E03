@@ -22,26 +22,25 @@ credencial, token ni dato personal real.
 
 ### Formato de las evidencias
 
-Las evidencias de `docs/evidence/` son salida de terminal y resultados de pruebas
-guardados en archivos de texto, no capturas de pantalla. La actividad admite
-expresamente esas formas de evidencia, y tienen una ventaja sobre una imagen:
-cualquiera puede volver a ejecutar el comando indicado y comparar el resultado.
+Cada evidencia está en `docs/evidence/` como imagen PNG y, junto a ella, el archivo de
+texto del que se generó. La imagen es la salida real de los comandos; el `.txt` permite
+copiar el comando, volver a ejecutarlo y comparar el resultado carácter por carácter.
 
-| Archivo | Qué contiene |
-|---|---|
-| `evidence/h1-expo-public-en-el-paquete.txt` | Búsqueda dentro del paquete construido que prueba el problema |
-| `evidence/h1-correccion-y-prueba.txt` | Antes y después de la corrección, con la prueba fallando y pasando |
-| `evidence/h2-gitignore-env.txt` | Comprobación de `git check-ignore` antes y después |
-| `evidence/h3-secreto-en-historial.txt` | Recuperación del contenido antiguo desde el historial |
-| `evidence/comprobacion-final.txt` | Estado final del repositorio y comprobaciones acumuladas |
+| Imagen | Texto de origen | Qué demuestra |
+|---|---|---|
+| `evidence/hallazgo-1-secreto-en-el-paquete.png` | `h1-expo-public-en-el-paquete.txt` | El valor de una variable pública aparece dentro del paquete construido |
+| `evidence/hallazgo-1-correccion-verificada.png` | `h1-correccion-y-prueba.txt` | La prueba falla antes de la corrección y pasa después, y el secreto desaparece del paquete |
+| `evidence/hallazgo-2-gitignore-env.png` | `h2-gitignore-env.txt` | `git check-ignore` antes y después de ampliar las reglas |
+| `evidence/hallazgo-3-secreto-en-historial.png` | `h3-secreto-en-historial.txt` | El contenido antiguo sigue recuperable desde el historial |
+| `evidence/comprobacion-final.png` | `comprobacion-final.txt` | Estado final del repositorio y comprobaciones acumuladas |
 
 ## Hallazgos
 
 | # | Hallazgo | Riesgo | Solución aplicada | Evidencia |
 |---|---|---|---|---|
-| 1 | El secreto del backend se leía desde una variable con el prefijo `EXPO_PUBLIC_`, en `src/config/backendConfig.ts` y en `.env.example` | Expo sustituye toda variable con ese prefijo en tiempo de construcción, así que su valor queda incrustado en el paquete que se instala en cada dispositivo. Cualquier persona con el APK puede extraerlo | Corregido. La variable se renombró a `CAMPUSOPS_API_SECRET`, fuera del espacio público, y se añadió una prueba que falla si el patrón regresa | `evidence/h1-expo-public-en-el-paquete.txt`, `evidence/h1-correccion-y-prueba.txt` |
-| 2 | `.gitignore` sólo ignoraba `.env`, no las variantes `.env.local` ni `.env.<modo>` que Expo también carga | Un archivo como `.env.local` con credenciales podía subirse al repositorio sin que Git avisara | Corregido. Se añadieron las reglas `.env.*` y `!.env.example` | `evidence/h2-gitignore-env.txt` |
-| 3 | La credencial ficticia eliminada en la semana 3 sigue siendo recuperable en el historial de Git, en el commit `1925944` | Quitar un secreto del árbol de trabajo no lo borra del historial. Quien clone el repositorio puede recuperarlo. El escaneo obligatorio del curso sólo revisa archivos rastreados en `HEAD` | No corregido a propósito. Reescribir el historial invalidaría la etiqueta `week-03-final` ya entregada. Se documenta la mitigación correcta y se elimina la causa de raíz con el hallazgo 1 | `evidence/h3-secreto-en-historial.txt` |
+| 1 | El secreto del backend se leía desde una variable con el prefijo `EXPO_PUBLIC_`, en `src/config/backendConfig.ts` y en `.env.example` | Expo sustituye toda variable con ese prefijo en tiempo de construcción, así que su valor queda incrustado en el paquete que se instala en cada dispositivo. Cualquier persona con el APK puede extraerlo | Corregido. La variable se renombró a `CAMPUSOPS_API_SECRET`, fuera del espacio público, y se añadió una prueba que falla si el patrón regresa | `evidence/hallazgo-1-secreto-en-el-paquete.png`, `evidence/hallazgo-1-correccion-verificada.png` |
+| 2 | `.gitignore` sólo ignoraba `.env`, no las variantes `.env.local` ni `.env.<modo>` que Expo también carga | Un archivo como `.env.local` con credenciales podía subirse al repositorio sin que Git avisara | Corregido. Se añadieron las reglas `.env.*` y `!.env.example` | `evidence/hallazgo-2-gitignore-env.png` |
+| 3 | La credencial ficticia eliminada en la semana 3 sigue siendo recuperable en el historial de Git, en el commit `1925944` | Quitar un secreto del árbol de trabajo no lo borra del historial. Quien clone el repositorio puede recuperarlo. El escaneo obligatorio del curso sólo revisa archivos rastreados en `HEAD` | No corregido a propósito. Reescribir el historial invalidaría la etiqueta `week-03-final` ya entregada. Se documenta la mitigación correcta y se elimina la causa de raíz con el hallazgo 1 | `evidence/hallazgo-3-secreto-en-historial.png` |
 
 Se identificaron 3 hallazgos y se corrigieron 2.
 
@@ -137,11 +136,17 @@ entorno, sino en sacar el secreto del espacio público.
 
 ### Evidencia
 
-- `docs/evidence/h1-expo-public-en-el-paquete.txt` — el valor de una variable pública
-  aparece dentro del paquete distribuible, y con la sonda activa también el secreto.
-- `docs/evidence/h1-correccion-y-prueba.txt` — la prueba nueva falla antes de la
-  corrección señalando los dos archivos con número de línea, pasa después, y la búsqueda
-  en el paquete reconstruido ya no encuentra el secreto.
+![El secreto dentro del paquete](evidence/hallazgo-1-secreto-en-el-paquete.png)
+
+![Corrección verificada antes y después](evidence/hallazgo-1-correccion-verificada.png)
+
+La primera imagen muestra que el valor de una variable pública aparece dentro del
+paquete distribuible, y con la sonda activa también el secreto. La segunda muestra la
+prueba nueva fallando antes de la corrección con los dos archivos y su número de línea,
+pasando después, y la búsqueda en el paquete reconstruido sin encontrar el secreto.
+
+Texto de origen: `evidence/h1-expo-public-en-el-paquete.txt` y
+`evidence/h1-correccion-y-prueba.txt`.
 
 ## Hallazgo 2 — `.gitignore` no cubría las variantes de `.env`
 
@@ -192,10 +197,12 @@ negación que conserva la plantilla rastreada, porque `.env.example` sí debe su
 
 ### Evidencia
 
-`docs/evidence/h2-gitignore-env.txt` contiene la comprobación de las seis variantes
-antes y después, la confirmación de que `.env.example` sigue rastreado con
-`git ls-files`, y un `git status` con un `.env` real presente en el disco donde ningún
-archivo de entorno aparece como pendiente de subir.
+![Cobertura de .gitignore antes y después](evidence/hallazgo-2-gitignore-env.png)
+
+La imagen contiene la comprobación de las seis variantes antes y después, la
+confirmación de que `.env.example` sigue rastreado con `git ls-files`, y un `git status`
+con un `.env` real presente en el disco donde ningún archivo de entorno aparece como
+pendiente de subir. Texto de origen: `evidence/h2-gitignore-env.txt`.
 
 ## Hallazgo 3 — El secreto ficticio permanece en el historial de Git
 
@@ -238,10 +245,12 @@ lugar de forzar una corrección que rompería una entrega ya calificada.
 
 ### Evidencia
 
-`docs/evidence/h3-secreto-en-historial.txt` muestra el historial del archivo, que el
-contenido antiguo sigue recuperable en el commit `1925944`, y que el árbol actual ya no
-lo contiene. El valor y el nombre de la variable aparecen enmascarados en la evidencia
-para no reintroducir el patrón en el árbol de trabajo.
+![El secreto sigue en el historial](evidence/hallazgo-3-secreto-en-historial.png)
+
+La imagen muestra el historial del archivo, que el contenido antiguo sigue recuperable
+en el commit `1925944`, y que el árbol actual ya no lo contiene. El valor y el nombre de
+la variable aparecen enmascarados para no reintroducir el patrón en el árbol de trabajo.
+Texto de origen: `evidence/h3-secreto-en-historial.txt`.
 
 ## Comprobación final
 
@@ -255,4 +264,6 @@ Al cerrar la auditoría se verificó que:
   tipos, estilo, prueba de humo, las 12 pruebas de controles de seguridad de la semana
   3 y la prueba de frontera arquitectónica de la semana 2.
 
-Los resultados están en `docs/evidence/comprobacion-final.txt`.
+![Comprobación final](evidence/comprobacion-final.png)
+
+Texto de origen: `evidence/comprobacion-final.txt`.
