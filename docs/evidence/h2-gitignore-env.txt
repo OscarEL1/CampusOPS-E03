@@ -1,0 +1,48 @@
+EVIDENCIA H-2 - Cobertura de .gitignore para archivos de entorno
+Rama: week4/security-audit-oscar
+Commit base: dd67992
+
+== ANTES ==
+
+$ grep -n env .gitignore
+8:.env
+
+Expo carga tambien .env.local y .env.<modo>. Comprobacion archivo por archivo
+con git check-ignore:
+
+  .env                       ignorado
+  .env.local                 NO IGNORADO  <-- riesgo: podria subirse
+  .env.development           NO IGNORADO  <-- riesgo: podria subirse
+  .env.production            NO IGNORADO  <-- riesgo: podria subirse
+  .env.test                  NO IGNORADO  <-- riesgo: podria subirse
+  .env.development.local     NO IGNORADO  <-- riesgo: podria subirse
+  .env.example               no ignorado  (correcto: es la plantilla sin valores)
+
+Resultado: solo .env esta cubierto. Las cinco variantes que Expo tambien
+carga quedan fuera de .gitignore y podrian llegar al repositorio.
+
+== CORRECCION APLICADA ==
+
+$ grep -n env .gitignore
+8:.env
+9:.env.*
+10:!.env.example
+
+== DESPUES ==
+
+  .env                       ignorado  (correcto)
+  .env.local                 ignorado  (correcto)
+  .env.development           ignorado  (correcto)
+  .env.production            ignorado  (correcto)
+  .env.test                  ignorado  (correcto)
+  .env.development.local     ignorado  (correcto)
+  .env.example               no ignorado  (correcto: la plantilla sigue rastreada)
+
+$ git ls-files .env.example
+.env.example
+
+$ git status --short   (con un .env real presente en el disco)
+  ningun archivo .env aparece como pendiente de subir
+
+Resultado: las seis variantes quedan ignoradas y .env.example sigue rastreado
+gracias a la regla de negacion !.env.example.

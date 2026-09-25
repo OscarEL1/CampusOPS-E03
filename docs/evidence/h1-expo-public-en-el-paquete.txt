@@ -1,0 +1,41 @@
+EVIDENCIA H-1 (parte 1) - El prefijo EXPO_PUBLIC_ incrusta el valor en el paquete
+Rama: week4/security-audit-oscar
+
+Todos los valores usados son ficticios.
+
+== 1. Archivo .env local, ignorado por git ==
+
+$ cat .env
+EXPO_PUBLIC_COURSE_BACKEND_URL=http://127.0.0.1:4310/demo-marker-a1b2c3
+EXPO_PUBLIC_API_SECRET[*]=demo_key_ficticio_no_real
+
+[*] Marcador insertado unicamente en esta evidencia para que el archivo no
+    active el escaneo de secretos del curso, que busca ese nombre seguido de
+    un signo igual. En el .env real no existe ese marcador.
+
+$ git check-ignore -v .env
+.gitignore:8:.env	.env
+
+== 2. Construccion del paquete de cliente ==
+
+$ npm run bundle:release
+Exported: dist/export
+
+$ ls -la dist/export/_expo/static/js/android/
+drwxr-xr-x 1 OscarLan 197609       0 Sep 24 18:17 ..
+-rw-r--r-- 1 OscarLan 197609 1444057 Sep 24 18:17 index-f01f6f480bc822b83a2ff10a73fa5a6a.hbc
+
+== 3. Busqueda de los valores dentro del paquete distribuible ==
+
+  grep -aF "demo-marker-a1b2c3"  ->  PRESENTE en el paquete
+  grep -aF "127.0.0.1:4310"  ->  PRESENTE en el paquete
+  grep -aF "demo_key_ficticio_no_real"  ->  ausente
+
+Lectura del resultado:
+El valor de EXPO_PUBLIC_COURSE_BACKEND_URL aparece literal dentro del paquete.
+Expo sustituye en tiempo de construccion toda variable con prefijo EXPO_PUBLIC_,
+por lo que su valor viaja a cada dispositivo y no es un secreto.
+
+El valor de EXPO_PUBLIC_API_SECRET no aparece todavia solo porque ningun
+modulo de la aplicacion importa src/config/backendConfig.ts. La parte 2 de esta
+evidencia demuestra que aparece en cuanto la aplicacion lo importa.

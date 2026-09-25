@@ -1,0 +1,53 @@
+COMPROBACION FINAL - Auditoria de seguridad semana 04
+Rama: week4/security-audit-oscar
+Fecha: 2026-09-24 18:25
+
+== 1. Ningun archivo de entorno esta pendiente de subir ==
+
+$ ls -la .env
+-rw-r--r-- 1 OscarLan 197609 119 Sep 24 18:20 .env
+
+$ git status --short
+ M .env.example
+ M .gitignore
+ M src/config/backendConfig.ts
+?? course-tests/env-exposure.test.ts
+?? docs/evidence/
+?? docs/security-audit.md
+?? reports/week-03/failure.json
+
+Un archivo .env con valores ficticios existe en el disco y NO aparece arriba.
+
+$ git ls-files .env .env.local .env.production
+  (vacio: ninguna variante esta rastreada)
+
+$ git ls-files .env.example
+.env.example
+
+== 2. La plantilla no contiene ningun valor ==
+
+$ cat .env.example
+# Copy this file to .env and set your own local values.
+# .env is ignored by git; never commit a filled copy.
+EXPO_PUBLIC_COURSE_BACKEND_URL=http://127.0.0.1:4310
+# Secreto del backend. Sin el prefijo EXPO_PUBLIC_ a proposito: ese prefijo
+# incrusta el valor en el paquete del cliente. Este valor nunca debe viajar
+# en la aplicacion. Usa unicamente datos ficticios en clase.
+CAMPUSOPS_API_SECRET=
+
+== 3. La sonda temporal se retiro ==
+
+$ git diff --stat main -- App.tsx
+  (sin diferencias: App.tsx quedo igual que en main)
+
+== 4. Las comprobaciones acumuladas siguen pasando ==
+
+  npm run typecheck                              exit 0  
+  npm run lint                                   exit 0  
+  npm run test:smoke                             exit 0  Tests:       1 passed
+  npm run test:security (semana 03)              exit 0  Tests:       12 passed
+  env-exposure.test.ts (semana 04)               exit 0  Tests:       2 passed
+  public/week-03.test.ts                         exit 0  Tests:       2 passed
+  architecture-boundaries (semana 02)            exit 0  Tests:       1 passed
+
+Avanzar de semana no desactivo ninguna comprobacion anterior.

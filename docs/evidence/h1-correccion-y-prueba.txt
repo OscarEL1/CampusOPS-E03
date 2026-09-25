@@ -1,0 +1,99 @@
+EVIDENCIA H-1 (parte 2) - Correccion y comprobacion antes / despues
+Rama: week4/security-audit-oscar
+
+Todos los valores usados son ficticios.
+
+El escenario es el mismo en los dos lados de la comparacion: la sonda temporal de
+auditoria hace que la aplicacion consuma el secreto, y el valor ficticio es identico
+(demo_key_ficticio_no_real). Lo unico que cambia es el nombre de la variable.
+
+
+== A. ANTES DE LA CORRECCION ==
+
+Codigo:
+  src/config/backendConfig.ts:19
+    return readBackendApiSecret(process.env.EXPO_PUBLIC_API_SECRET);
+
+A1. Prueba de regresion nueva
+
+$ npx jest --ci --runInBand course-tests/env-exposure.test.ts
+
+  FAIL course-tests/env-exposure.test.ts
+    x no shipped file names a credential under the public env prefix
+    v the public env prefix is still used for non-secret configuration
+
+  Received:
+    Array [
+      ".env.example:4: EXPO_PUBLIC_API_SECRET",
+      "src/config/backendConfig.ts:19: EXPO_PUBLIC_API_SECRET",
+    ]
+
+  Tests: 1 failed, 1 passed, 2 total
+  exit code: 1
+
+La prueba senala los dos archivos exactos, con numero de linea.
+
+A2. Busqueda en el paquete distribuible
+
+$ npm run bundle:release
+$ grep -aF <patron> dist/export/_expo/static/js/android/*.hbc
+
+  demo_key_ficticio_no_real      PRESENTE en el paquete
+  demo-marker-a1b2c3             PRESENTE en el paquete
+
+El secreto viaja dentro del archivo que se instala en el dispositivo.
+
+
+== B. DESPUES DE LA CORRECCION ==
+
+Codigo:
+  src/config/backendConfig.ts
+    return readBackendApiSecret(process.env.CAMPUSOPS_API_SECRET);
+
+.env.example: la variable publica de secreto se elimino y se documento el nombre nuevo.
+
+B1. Revision de tipos y estilo
+
+$ npm run typecheck    -> exit code 0
+$ npm run lint         -> exit code 0
+
+B2. Prueba de regresion nueva
+
+$ npx jest --ci --runInBand course-tests/env-exposure.test.ts
+
+  PASS course-tests/env-exposure.test.ts
+    v no shipped file names a credential under the public env prefix (116 ms)
+    v the public env prefix is still used for non-secret configuration (2 ms)
+
+  Tests: 2 passed, 2 total
+  exit code: 0
+
+B3. Busqueda en el paquete reconstruido, con la sonda todavia activa
+
+$ npm run bundle:release
+$ grep -aF <patron> dist/export/_expo/static/js/android/*.hbc
+
+  demo_key_ficticio_no_real      ausente
+  CAMPUSOPS_API_SECRET           PRESENTE en el paquete
+  demo-marker-a1b2c3             PRESENTE en el paquete
+
+
+== LECTURA DEL RESULTADO ==
+
+1. El valor del secreto ya no esta en el paquete, aunque la aplicacion siga llamando a
+   la funcion que lo lee. Ese es el efecto buscado.
+
+2. El NOMBRE de la variable si aparece en el paquete, y eso es correcto y esperado.
+   Expo solo sustituye por su valor las variables con prefijo EXPO_PUBLIC_. Las demas
+   quedan como una consulta en tiempo de ejecucion, asi que el nombre de la propiedad
+   forma parte del codigo pero el valor no. Un nombre de variable no es un secreto.
+   En una construccion de cliente esa consulta devuelve undefined y el modulo lanza un
+   error, por lo que un secreto no puede viajar en silencio.
+
+3. demo-marker-a1b2c3 sigue presente a proposito: es el valor de
+   EXPO_PUBLIC_COURSE_BACKEND_URL, configuracion que si es publica. La correccion no
+   consistio en vaciar el archivo de entorno, sino en sacar el secreto del espacio
+   publico.
+
+4. La sonda temporal se retiro del proyecto despues de tomar esta medicion. Su unico
+   proposito fue demostrar el problema con una salida real en vez de describirlo.
