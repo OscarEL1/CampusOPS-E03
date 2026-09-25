@@ -1,0 +1,48 @@
+# AC-03 falla declarada semana 04 - la sanitizacion deja de recorrer listas
+
+Datos ficticios unicamente.
+
+## Diagnostico - estado roto
+
+redactSensitive devuelve el arreglo sin recorrerlo, como si copiarlo fuera
+un costo evitable. Los registros que viajan dentro de la lista dejan de sanearse.
+
+$ npm run typecheck
+  codigo de salida: 0
+$ npm run lint
+  codigo de salida: 0
+
+$ npm test -- --ci --runInBand course-tests/public/week-04.test.ts
+Tests:       1 passed, 1 total
+  codigo de salida: 0
+  La prueba publica NO observa esta regresion: en su caso las listas estan
+  bajo claves sensibles, que se reemplazan enteras antes de recorrerlas.
+
+$ npm run test:negative
+    × redacts every element of a list of records (9 ms)
+    -       "technicianId": "[REDACTED]",
+    +       "technicianId": "campus-tech-301",
+    -       "technicianId": "[REDACTED]",
+    +       "technicianId": "campus-tech-302",
+      86 |         { technicianId: REDACTED, status: 'assigned', durationMs: 10 },
+Tests:       1 failed, 12 passed, 13 total
+  codigo de salida: 1
+
+## Resultado corregido
+
+redactSensitive vuelve a recorrer la lista y a reconstruirla con map,
+por lo que cada registro dentro de ella se sanea y la entrada sigue intacta.
+
+$ npm run typecheck
+  codigo de salida: 0
+$ npm run lint
+  codigo de salida: 0
+
+$ npm run test:negative
+Test Suites: 1 passed, 1 total
+Tests:       13 passed, 13 total
+  codigo de salida: 0
+
+$ npm test -- --ci --runInBand course-tests/public/week-04.test.ts
+Tests:       1 passed, 1 total
+  codigo de salida: 0

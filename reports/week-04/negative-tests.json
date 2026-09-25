@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "week": 4,
+  "commitSha": "4c2b8de8b8c8fb61d1dd62989da5f972b9c40d60",
+  "generatedAt": "2026-09-25T23:35:43.136493+00:00",
+  "status": "pass",
+  "checks": [
+    {
+      "id": "telemetria-claves-sensibles-anidadas",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:negative",
+      "evidence": "Con authorization, refreshToken y email a tres niveles de profundidad, el resultado serializado no contiene el token ficticio ni el correo ficticio, y conserva accept, attempt y durationMs."
+    },
+    {
+      "id": "telemetria-listas-de-registros",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:negative",
+      "evidence": "Una lista de dos asignaciones devuelve technicianId como [REDACTED] en cada elemento, conservando status y durationMs. Es el caso que la prueba publica no cubre."
+    },
+    {
+      "id": "telemetria-valor-completo-bajo-clave-sensible",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:negative",
+      "evidence": "Cuando photos, internalComments o location contienen una lista o un objeto, el valor se reemplaza entero. Ni la foto, ni la nota interna, ni la latitud o longitud ficticias aparecen en la salida serializada."
+    },
+    {
+      "id": "telemetria-normalizacion-de-claves",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:negative",
+      "evidence": "access_token, ACCESS-TOKEN, accessToken, Display_Name e internal-comments se reconocen como la misma clave sensible, segun la normalizacion a minusculas sin guiones ni guiones bajos del contrato."
+    },
+    {
+      "id": "telemetria-contexto-tecnico-conservado",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:negative",
+      "evidence": "incidentId, correlationId, status, attempt y durationMs sobreviven sin cambios. Un operador conserva lo que necesita para diagnosticar y no se identifica a ninguna persona."
+    },
+    {
+      "id": "telemetria-entrada-no-modificada",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:negative",
+      "evidence": "Con la entrada congelada en profundidad, su serializacion es identica antes y despues, el resultado es un objeto distinto y el correo original sigue accesible en la entrada."
+    },
+    {
+      "id": "telemetria-clave-proto-no-contamina",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:negative",
+      "evidence": "Una carga con la clave __proto__ produce una propiedad propia ordinaria. El prototipo del resultado sigue siendo Object.prototype y un objeto vacio no gana la propiedad inyectada."
+    },
+    {
+      "id": "telemetria-valores-no-registro",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:negative",
+      "evidence": "Texto, numero, null, undefined y una instancia de Date se devuelven tal cual. Un Date no se aplana a objeto vacio."
+    },
+    {
+      "id": "telemetria-adaptador-igual-a-la-regla",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:negative",
+      "evidence": "redactForTelemetry de src/course-evaluation devuelve exactamente lo mismo que redactSensitive del dominio. El adaptador evaluado y la logica real de CampusOps son un solo camino de codigo."
+    },
+    {
+      "id": "error-reporte-de-peticion-fallida",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm run test:negative",
+      "evidence": "Un reporte de error de una peticion con codigo 429 conserva correlationId, status e incidentId y pierde la cabecera de sesion, el userId, el correo, el nombre y la ubicacion ficticios."
+    },
+    {
+      "id": "error-secreto-ausente-sin-filtrar-valor",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm run test:negative",
+      "evidence": "readBackendApiSecret lanza un error con valor ausente o en blanco. El mensaje nombra la variable y no contiene el valor, ni la palabra Bearer, ni un signo igual."
+    },
+    {
+      "id": "logs-entrada-de-incidencia-coherente",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:negative",
+      "evidence": "La entrada que produce logIncidentEvent de la semana 03 atraviesa la regla de la semana 04 sin cambios. Los dos controles coinciden: nada de lo que emite la lista de permitidos es sensible bajo el contrato nuevo."
+    },
+    {
+      "id": "logs-limite-del-contrato-sobre-texto-libre",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:negative",
+      "evidence": "Riesgo residual comprobado, no ocultado. Una incidencia cruda pasada solo por la regla de telemetria pierde location, reporterId y assignedTechnicianId, pero conserva description, porque el contrato publicado no incluye texto libre. Por eso logIncidentEvent construye su registro desde una lista de permitidos: su salida no contiene titulo, descripcion ni ubicacion."
+    },
+    {
+      "id": "falla-01-listas-sin-sanear",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "git show 7001162db4a9037fa0c047a6a25d177c9e709bb7 -- src/campusops/domain/logRedaction.ts",
+      "evidence": "Falla declarada reproducida en el commit 7001162 devolviendo el arreglo sin recorrerlo. npm run typecheck y npm run lint salieron 0 y la prueba publica de la semana 04 tambien paso, porque en su carga las listas estan bajo claves sensibles. Solo npm run test:negative fallo, 1 de 13, con technicianId saliendo como campus-tech-301 y campus-tech-302 en claro, codigo de salida 1. Corregido en el commit 4c2b8de8b8c8fb61d1dd62989da5f972b9c40d60. Diagnostico y resultado corregido en reports/week-04/failure-01-listas-sin-sanear.log."
+    }
+  ]
+}

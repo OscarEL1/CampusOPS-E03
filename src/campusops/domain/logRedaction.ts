@@ -25,3 +25,90 @@ export function redactIncidentForLog(incident: Incident): IncidentLogFields {
     status: incident.status,
   };
 }
+
+export const REDACTED = '[REDACTED]';
+
+/**
+ * Keys whose value never reaches telemetry, normalised as `normaliseKey`
+ * produces them. The published contract in docs/CAMPUSOPS_API.md defines this
+ * set; it covers session material, personal identifiers, physical location and
+ * the free-text or media attached to an incident.
+ *
+ * Technical context such as incidentId, correlationId, status, attempt and
+ * durationMs is deliberately absent, because an operator needs it to diagnose
+ * a failure and it identifies no person.
+ */
+const SENSITIVE_KEYS: ReadonlySet<string> = new Set([
+  'authorization',
+  'password',
+  'token',
+  'accesstoken',
+  'refreshtoken',
+  'email',
+  'displayname',
+  'name',
+  'userid',
+  'reporterid',
+  'technicianid',
+  'assignedtechnicianid',
+  'location',
+  'latitude',
+  'longitude',
+  'photos',
+  'evidence',
+  'internalcomments',
+  'assignmenthistory',
+]);
+
+/** Lowercases the key and drops `_` and `-`, so `access_token` and `accessToken` match. */
+export function normaliseKey(key: string): string {
+  return key.toLowerCase().replace(/[_-]/g, '');
+}
+
+export function isSensitiveKey(key: string): boolean {
+  return SENSITIVE_KEYS.has(normaliseKey(key));
+}
+
+/**
+ * True only for a plain data record. A Date, a Map or a class instance is left
+ * untouched instead of being flattened into an empty object.
+ */
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const prototype: unknown = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+/**
+ * Returns a redacted copy of a telemetry payload.
+ *
+ * Objects and arrays are walked to any depth. When a key is sensitive the whole
+ * value is replaced, so a nested object or a list of photos is never partially
+ * disclosed. The input is never modified: every container is rebuilt, so a
+ * caller can keep logging a payload it still needs intact.
+ */
+export function redactSensitive(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => redactSensitive(item));
+  }
+
+  if (!isPlainRecord(value)) {
+    return value;
+  }
+
+  const output: Record<string, unknown> = {};
+  for (const [key, nested] of Object.entries(value)) {
+    // defineProperty rather than assignment: a payload carrying a "__proto__"
+    // key must become an ordinary own property instead of touching the
+    // prototype chain of the copy.
+    Object.defineProperty(output, key, {
+      value: isSensitiveKey(key) ? REDACTED : redactSensitive(nested),
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
+  }
+  return output;
+}
