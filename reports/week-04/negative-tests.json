@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "week": 4,
-  "commitSha": "4c2b8de8b8c8fb61d1dd62989da5f972b9c40d60",
-  "generatedAt": "2026-09-25T23:35:43.136493+00:00",
+  "commitSha": "09bfcbbf1a4f7516b7fffeb49fb69719bf01ded6",
+  "generatedAt": "2026-09-27T22:01:02.591755+00:00",
   "status": "pass",
   "checks": [
     {
@@ -95,6 +95,20 @@
       "scenarioType": "boundary",
       "command": "npm run test:negative",
       "evidence": "Riesgo residual comprobado, no ocultado. Una incidencia cruda pasada solo por la regla de telemetria pierde location, reporterId y assignedTechnicianId, pero conserva description, porque el contrato publicado no incluye texto libre. Por eso logIncidentEvent construye su registro desde una lista de permitidos: su salida no contiene titulo, descripcion ni ubicacion."
+    },
+    {
+      "id": "almacenamiento-valor-danado-no-se-convierte-en-sesion",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/secure-session-store.test.ts",
+      "evidence": "3 pruebas aprobadas, codigo de salida 0. Cuando el almacen devuelve un valor que no es JSON valido, la lectura devuelve null y borra la entrada en lugar de confiar en ella, de modo que un valor danado nunca se convierte en una sesion autenticada. El contenido invalido no se expone en el resultado ni en un error."
+    },
+    {
+      "id": "almacenamiento-sin-llamar-al-modulo-nativo-en-pruebas",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/secure-session-store.test.ts",
+      "evidence": "La composicion acepta un sustituto en memoria y no invoca setItemAsync ni getItemAsync. Esto demuestra que el puerto del dominio permite comprobar el flujo sin llavero real, y que el modulo nativo queda confinado al adaptador. La sesion persistida usa la clave campusops.session.v1 con accesibilidad WHEN_UNLOCKED_THIS_DEVICE_ONLY, y los valores campus-reporter-demo-401 y fictional-token-for-storage-test son ficticios."
     },
     {
       "id": "falla-01-listas-sin-sanear",

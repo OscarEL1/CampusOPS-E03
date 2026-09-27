@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "week": 4,
+  "teamId": "Equipo-03",
+  "note": "El equipo esta integrado por dos personas. El profesor autorizo de forma explicita trabajar y entregar en equipo de dos para esta actividad. El contrato de evidencias exige exactamente tres registros en members, por lo que esa comprobacion de esquema falla de forma conocida y declarada; ocurre desde la semana 01. No se agrego un tercer integrante porque la guia de entrega prohibe identidades inventadas o compartidas. Los dos registros siguientes corresponden a personas reales con su identidad Git registrada.",
+  "members": [
+    {
+      "studentId": "a3523110665",
+      "commitShas": [
+        "fd0ca36abb48b13fa674487715b26c98f9d80f08",
+        "88d4944ddab6256d72d9024b4ab1f7641d5b0f3c",
+        "9fb8618028a2253490be94426106095437e66a08",
+        "7001162db4a9037fa0c047a6a25d177c9e709bb7",
+        "4c2b8de8b8c8fb61d1dd62989da5f972b9c40d60",
+        "2a4c79bf8c074d2af8751e20ee59d80825bc0884",
+        "f20890ff14af47c2d87d7217b2f98f02ad83fcd6",
+        "e5581f974453cc02b7a0f8b8c723929251ff8ba7"
+      ],
+      "files": [
+        ".github/workflows/week-04-seguridad-privacidad-feedback.yml",
+        "src/campusops/domain/logRedaction.ts",
+        "src/course-evaluation/index.ts",
+        "course-tests/negative-exposure.test.ts",
+        "reports/week-04/secret-scan.json",
+        "reports/week-04/negative-tests.json",
+        "reports/week-04/failure-01-listas-sin-sanear.log",
+        "package-lock.json",
+        "evidence/week-04/engineering.json"
+      ],
+      "tests": [
+        "npm run test:negative",
+        "npm run test:security",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run audit:ci",
+        "npm run test:smoke",
+        "npm test -- --ci --runInBand course-tests/public/week-04.test.ts"
+      ],
+      "reviews": [
+        "Pull request #8 docs/alejandro-week04-storage: revision del almacenamiento seguro y del documento de controles. La revision encontro que package-lock.json habia quedado desincronizado con package.json al instalar expo-secure-store, lo que hacia fallar npm ci y dejaba omitidos todos los pasos posteriores del workflow, incluido AC-01. Se corrigio en el commit f20890f y se verifico que el runner vuelve a pasar Reproducible setup y AC-01."
+      ],
+      "prediction": "Cada amenaza priorizada debe quedar ligada a un control en codigo y a una prueba que falle cuando el control se retira. Esperaba que la prueba publica de la semana 04, por si sola, no detectara una regresion en el recorrido de listas, porque en su carga las listas estan bajo claves sensibles y se reemplazan enteras antes de recorrerlas.",
+      "command": "npm run test:negative",
+      "observedResult": "13 pruebas aprobadas con codigo de salida 0 sobre el commit 09bfcbbf1a4f7516b7fffeb49fb69719bf01ded6. La falla declarada se reprodujo en el commit 7001162 devolviendo el arreglo sin recorrerlo: npm run typecheck y npm run lint salieron 0 y la prueba publica de la semana 04 tambien paso, mientras que npm run test:negative fallo 1 de 13 con codigo de salida 1, mostrando technicianId como campus-tech-301 y campus-tech-302 en claro. Corregido en el commit 4c2b8de.",
+      "explanation": "Integre el paquete de la semana 04 conservando el workflow con permissions: contents: read y el ref con fetch-depth: 2 que el evaluador necesita para resolver HEAD^. Implemente la sanitizacion como regla del dominio en src/campusops/domain/logRedaction.ts y conecte el adaptador evaluado redactForTelemetry a esa regla, de modo que el comportamiento calificado y el que usa la aplicacion sean un solo camino de codigo. La regla recorre objetos y listas a cualquier profundidad, reemplaza el valor completo cuando la clave es sensible, normaliza nombres a minusculas sin guiones ni guiones bajos, conserva contexto tecnico y no modifica la entrada; las copias se escriben con defineProperty para que una clave __proto__ no toque la cadena de prototipos. Escribi las 13 pruebas negativas agrupadas por amenaza y los dos reportes de la semana. En la revision del PR de mi companero localice y corregi el lockfile desincronizado que bloqueaba AC-01."
+    },
+    {
+      "studentId": "AlexD39",
+      "commitShas": [
+        "25d1214e1f64054af0040f119543450af622904a"
+      ],
+      "files": [
+        "docs/security-controls.md",
+        "src/campusops/domain/sessionStore.ts",
+        "src/campusops/infrastructure/secureSessionStore.ts",
+        "src/config/backendConfig.ts",
+        "src/app/composition.ts",
+        "course-tests/secure-session-store.test.ts",
+        "course-tests/env-exposure.test.ts",
+        ".env.example",
+        "app.json",
+        "package.json"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand course-tests/secure-session-store.test.ts",
+        "npm test -- --ci --runInBand course-tests/env-exposure.test.ts",
+        "npm run test:security",
+        "npm run test:negative"
+      ],
+      "reviews": [],
+      "prediction": "Un almacen seguro detras de un puerto del dominio debe permitir probar guardar, leer y borrar sin llavero real, y un valor almacenado danado no debe convertirse nunca en una sesion autenticada. Esperaba ademas que un secreto declarado bajo el prefijo publico de Expo quedara incrustado en el paquete del cliente, por lo que debia salir de ese espacio de nombres.",
+      "command": "npm test -- --ci --runInBand course-tests/secure-session-store.test.ts",
+      "observedResult": "3 pruebas aprobadas con codigo de salida 0. Guardar, leer y borrar usan la clave campusops.session.v1 con keychainAccessible WHEN_UNLOCKED_THIS_DEVICE_ONLY. Un valor malformado devuelve null y se elimina sin exponer su contenido. La composicion acepta un sustituto en memoria y no llama al modulo nativo. Ademas npm test -- --ci --runInBand course-tests/env-exposure.test.ts salio 0 con 2 pruebas aprobadas, confirmando que ningun archivo de src, App.tsx, app.json ni .env.example declara un nombre de credencial bajo el prefijo publico.",
+      "explanation": "Implemente el almacenamiento seguro de la futura sesion: el puerto SessionStore en el dominio, el adaptador SecureSessionStore sobre expo-secure-store en infraestructura, y la composicion que elige el adaptador seguro admitiendo inyeccion para pruebas. Saque el secreto del backend del prefijo publico de Expo renombrandolo a CAMPUSOPS_API_SECRET, actualice .env.example y anadi una prueba de regresion que falla si un nombre de credencial vuelve a ese espacio. Escribi docs/security-controls.md relacionando cada amenaza del modelo de la semana 03 con su control, su ubicacion y su verificacion, justificando la eleccion de almacenamiento frente a texto plano, memoria y uso directo del modulo, y declarando tres riesgos residuales."
+    }
+  ]
+}

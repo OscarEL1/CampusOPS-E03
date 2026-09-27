@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 4,
-  "commitSha": "f20890ff14af47c2d87d7217b2f98f02ad83fcd6",
+  "commitSha": "09bfcbbf1a4f7516b7fffeb49fb69719bf01ded6",
   "decision": "Elegimos expo-secure-store detras del puerto SessionStore para persistir la futura sesion autenticada. El adaptador serializa identificador del actor, rol y token bajo una sola clave y pide accesibilidad unicamente con el dispositivo desbloqueado y sin migracion a otro dispositivo. Si el contenido almacenado no es JSON valido o no cumple la forma esperada, se borra y se devuelve null, de modo que un valor danado nunca se convierte en una sesion autenticada. El puerto mantiene el dominio independiente de Expo y permite inyectar un sustituto en memoria en las pruebas, sin llamar al modulo nativo.",
   "alternatives": [
     "Guardar la sesion como texto plano en AsyncStorage o en un archivo de la aplicacion: simplifica el acceso y no requiere modulo nativo, pero deja el token legible para cualquiera que lea el almacenamiento de la aplicacion.",
