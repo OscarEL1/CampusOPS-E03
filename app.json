@@ -11,6 +11,9 @@
     },
     "ios": {
       "bundleIdentifier": "mx.edu.dmi.engineeringapp"
-    }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }

@@ -3,8 +3,12 @@
  *
  * The secret is read from the environment only. There is no in-repository
  * fallback on purpose: a missing value fails loudly instead of shipping a
- * credential inside the bundle and the git history. The expected variable
- * name is documented in .env.example, which carries the name without a value.
+ * credential inside the bundle and the git history.
+ *
+ * This variable deliberately has no EXPO_PUBLIC_ prefix. Expo embeds variables
+ * with that prefix in the client bundle, which would publish the credential to
+ * every installed copy. CAMPUSOPS_API_SECRET is therefore available only to
+ * backend tooling and tests; a client build receives no secret and fails closed.
  */
 
 /** Pure validation, so the rule can be tested without touching the process. */
@@ -16,5 +20,5 @@ export function readBackendApiSecret(rawValue: string | undefined): string {
 }
 
 export function getBackendApiSecret(): string {
-  return readBackendApiSecret(process.env.EXPO_PUBLIC_API_SECRET);
+  return readBackendApiSecret(process.env.CAMPUSOPS_API_SECRET);
 }
