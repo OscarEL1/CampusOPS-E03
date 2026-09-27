@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "week": 4,
+  "commitSha": "f20890ff14af47c2d87d7217b2f98f02ad83fcd6",
+  "decision": "Elegimos expo-secure-store detras del puerto SessionStore para persistir la futura sesion autenticada. El adaptador serializa identificador del actor, rol y token bajo una sola clave y pide accesibilidad unicamente con el dispositivo desbloqueado y sin migracion a otro dispositivo. Si el contenido almacenado no es JSON valido o no cumple la forma esperada, se borra y se devuelve null, de modo que un valor danado nunca se convierte en una sesion autenticada. El puerto mantiene el dominio independiente de Expo y permite inyectar un sustituto en memoria en las pruebas, sin llamar al modulo nativo.",
+  "alternatives": [
+    "Guardar la sesion como texto plano en AsyncStorage o en un archivo de la aplicacion: simplifica el acceso y no requiere modulo nativo, pero deja el token legible para cualquiera que lea el almacenamiento de la aplicacion.",
+    "Mantener la sesion unicamente en memoria: evita por completo una copia persistente, pero obliga a iniciar sesion despues de cada cierre o reinicio de la aplicacion.",
+    "Llamar a expo-secure-store directamente desde casos de uso y pantallas: reduce archivos, pero acopla el dominio a un modulo nativo e impide sustituirlo de forma controlada en Jest."
+  ],
+  "tradeoff": "El beneficio es delegar la proteccion en el llavero de iOS o el keystore de Android y conservar una interfaz comprobable detras de un puerto del dominio. El costo es depender de capacidades nativas, aceptar diferencias entre plataformas y manejar valores ausentes o invalidados. Se acepta porque la alternativa en texto plano deja el token legible en el almacenamiento de la aplicacion y la alternativa en memoria degrada el uso en cada reinicio. El riesgo residual queda declarado en docs/security-controls.md: SecureStore no protege un dispositivo con acceso root o jailbreak, no protege la copia del token que ya esta en memoria durante la ejecucion, y la identidad sigue siendo ficticia y fija en src/app/composition.ts hasta que se implemente ADR-003.",
+  "requirementIds": ["AC-01", "AC-02", "AC-03", "AC-04"],
+  "verification": [
+    {
+      "command": "npm ci",
+      "result": "Codigo de salida 0 en el runner de GitHub Actions, ejecucion 36331834242.",
+      "evidence": "La instalacion de expo-secure-store habia dejado @emnapi/core y @emnapi/runtime fuera de package-lock.json, y npm ci se negaba a instalar. En la ejecucion anterior 36285885185 el paso Reproducible setup fallo y todos los pasos posteriores quedaron omitidos, incluido AC-01. Tras sincronizar el lockfile con npm install, los pasos Reproducible setup, Public Expo Android build y AC-01 pasan. Ninguna version de dependencia cambio."
+    },
+    {
+      "command": "npm test -- --ci --runInBand course-tests/secure-session-store.test.ts",
+      "result": "3 pruebas aprobadas, codigo de salida 0.",
+      "evidence": "Guardar, leer y borrar una sesion ficticia usa la clave campusops.session.v1 con keychainAccessible WHEN_UNLOCKED_THIS_DEVICE_ONLY. Un valor almacenado malformado devuelve null y se elimina, sin exponer su contenido. La composicion acepta un sustituto en memoria y no llama al modulo nativo, lo que demuestra que el puerto permite probar sin llavero real. Los valores campus-reporter-demo-401 y fictional-token-for-storage-test son ficticios."
+    },
+    {
+      "command": "npm test -- --ci --runInBand course-tests/env-exposure.test.ts",
+      "result": "2 pruebas aprobadas, codigo de salida 0.",
+      "evidence": "Ningun archivo rastreado de src/, App.tsx, app.json ni .env.example declara un nombre de credencial bajo el prefijo publico de Expo. La segunda prueba comprueba que ese prefijo sigue disponible para configuracion que si es publica, de modo que el control no se satisface borrando todas las variables. El secreto del backend se lee ahora desde CAMPUSOPS_API_SECRET, fuera del espacio publico."
+    },
+    {
+      "command": "npm run test:security && npm run test:negative",
+      "result": "Codigo de salida 0 en el runner de GitHub Actions, ejecucion 36331834242.",
+      "evidence": "El paso Week 04 security and negative checks paso con los 12 controles acumulados de la semana 03 y las 13 pruebas negativas de la semana 04, incluidas estructuras anidadas, listas, caminos de error y el limite declarado del contrato sobre texto libre."
+    }
+  ]
+}
