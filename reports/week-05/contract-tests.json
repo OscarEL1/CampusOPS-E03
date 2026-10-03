@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "week": 5,
+  "commitSha": "7a3f3674de6e8ed4cac8f270a1ecf715cf786074",
+  "generatedAt": "2026-10-03T15:26:54.162511+00:00",
+  "status": "pass",
+  "checks": [
+    {
+      "id": "sobre-valido-con-los-cuatro-campos",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:cloud",
+      "evidence": "parseRemoteResource acepta { id, version, status, payload } y devuelve un objeto nuevo con exactamente esos cuatro campos."
+    },
+    {
+      "id": "sobre-payload-nulo-es-valido",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:cloud",
+      "evidence": "Un sobre con payload null es valido. El contrato lo permite, asi que no se reporta como violacion."
+    },
+    {
+      "id": "sobre-campos-futuros-ignorados",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:cloud",
+      "evidence": "Campos adicionales como etag o links se ignoran y no llegan al resto de la app: el valor devuelto solo tiene id, payload, status y version."
+    },
+    {
+      "id": "sobre-reglas-de-cada-campo",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:cloud",
+      "evidence": "Se rechazan: version negativa, fraccionaria, de texto, NaN e infinita; id vacio, de solo espacios, numerico o ausente; status vacio o ausente; payload arreglo, texto, numero o ausente; y una entrada null, undefined, arreglo, texto o numero. La version 0 se acepta como limite inferior."
+    },
+    {
+      "id": "sobre-error-publicado-sin-detalle-interno",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:cloud",
+      "evidence": "Una violacion devuelve exactamente { ok: false, error: 'contract' }, sin campos internos, de modo que una comparacion estricta del evaluador se sostiene. La regla que fallo queda disponible solo para diagnostico mediante inspectRemoteResource."
+    },
+    {
+      "id": "sobre-entrada-sin-modificar",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:cloud",
+      "evidence": "Con la entrada congelada, su serializacion es identica antes y despues de validar."
+    },
+    {
+      "id": "adaptador-evaluado-es-la-misma-regla",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:cloud",
+      "evidence": "parseRemoteResource de src/course-evaluation devuelve lo mismo que la regla del cliente para casos validos, nulos y con cada tipo de violacion. Son un solo camino de codigo."
+    },
+    {
+      "id": "prueba-publica-semana-05",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-05.test.ts",
+      "evidence": "5 de 5 casos aprobados, codigo de salida 0."
+    },
+    {
+      "id": "dto-mapeado-a-incidencia-del-dominio",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:cloud",
+      "evidence": "Un payload valido se convierte en una Incident del dominio. El DTO no trae titulo, asi que la app muestra una etiqueta fija de la categoria en lugar de inventar una frase."
+    },
+    {
+      "id": "dto-payload-nulo-queda-retenido",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:cloud",
+      "evidence": "Un payload null produce una incidencia withheld con solo id, version y estado. No se rellena categoria, descripcion ni ubicacion."
+    },
+    {
+      "id": "dto-rechaza-campos-invalidos",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:cloud",
+      "evidence": "Se rechaza la incidencia completa ante un estado fuera del dominio, aun con payload null; una categoria desconocida; una descripcion vacia; una ubicacion ausente o enviada como objeto; un reportante ausente; y un assignedTechnicianId ausente o vacio. Ausente no equivale a sin asignar, que se expresa con null."
+    },
+    {
+      "id": "separacion-campos-solo-del-servidor-excluidos",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:cloud",
+      "evidence": "priority, notes, evidence, history y diagnosis no se copian a la Incident del dominio. Las notas internas, la evidencia y el historial de quien actuo no aparecen en el objeto que usa la app."
+    },
+    {
+      "id": "separacion-version-junto-a-la-incidencia",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run test:cloud",
+      "evidence": "La version del servidor viaja al lado de la incidencia en RemoteIncident, no dentro de ella, porque pertenece a la copia remota."
+    },
+    {
+      "id": "separacion-objeto-nuevo",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm run test:cloud",
+      "evidence": "Cambiar el DTO despues de mapearlo no cambia la incidencia del dominio."
+    },
+    {
+      "id": "separacion-pantallas-sin-http",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/architecture-boundaries.test.ts",
+      "evidence": "1 de 1 aprobada: src/campusops/ui no importa infraestructura. Las pantallas reciben resultados tipados del caso de uso y nunca llaman HTTP; el cliente vive en src/campusops/infrastructure/remote."
+    },
+    {
+      "id": "falla-01-payload-nulo-como-invalido",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "git show 6f84f87ec92f9544fed79628249a66994cdb1dd7 -- src/campusops/infrastructure/remote/incidentDto.ts",
+      "evidence": "Falla declarada reproducida en el commit 6f84f87: toRemoteIncident trataba un payload null valido como invalid('payload_missing'). npm run typecheck y npm run lint salieron 0 y la prueba publica de la semana 05 paso 5 de 5, porque valida el sobre y el sobre con payload null sigue siendo valido. Solo npm run test:cloud fallo, 4 de 98, incluida la ejecucion contra el backend real con la variante nullable. Corregido en el commit 7a3f3674de6e8ed4cac8f270a1ecf715cf786074. Diagnostico y resultado corregido en reports/week-05/failure-01-payload-nulo-como-invalido.log."
+    }
+  ]
+}

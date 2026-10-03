@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "week": 5,
+  "commitSha": "7a3f3674de6e8ed4cac8f270a1ecf715cf786074",
+  "generatedAt": "2026-10-03T15:26:54.162511+00:00",
+  "status": "pass",
+  "checks": [
+    {
+      "id": "exito-lista-valida",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts && npm test -- --ci --runInBand course-tests/remote-backend.test.ts",
+      "evidence": "Respuesta simulada y backend real con la variante success.",
+      "expected": "ok con incidencias available",
+      "observed": "ok con campus-inc-001 available, version 1, del reportante reporter-1"
+    },
+    {
+      "id": "nullable-payload-nulo",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts && npm test -- --ci --runInBand course-tests/remote-backend.test.ts",
+      "evidence": "Respuesta simulada y backend real con la variante nullable. Ni error ni formato invalido.",
+      "expected": "ok con la incidencia withheld y sin datos inventados",
+      "observed": "ok con { kind: withheld, summary: { id: campus-inc-001, version: 1, status: assigned } }"
+    },
+    {
+      "id": "lista-vacia",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts",
+      "evidence": "Una lista sin elementos es una respuesta valida, distinta de un error.",
+      "expected": "ok con lista vacia",
+      "observed": "ok con []"
+    },
+    {
+      "id": "malformed-json-invalido",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts && npm test -- --ci --runInBand course-tests/remote-backend.test.ts",
+      "evidence": "Un 200 cuyo cuerpo es '{\"items\": [}', simulado y desde el backend real con la variante malformed.",
+      "expected": "invalid_response not_json, sin excepcion",
+      "observed": "{ ok: false, failure: { kind: invalid_response, reason: not_json } }"
+    },
+    {
+      "id": "contrato-roto-en-un-elemento",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts",
+      "evidence": "Un elemento con version de texto rechaza la lista completa: mostrar el resto ocultaria que cliente y servidor no estan de acuerdo.",
+      "expected": "invalid_response sin lista parcial",
+      "observed": "{ kind: invalid_response, reason: item_1_version }"
+    },
+    {
+      "id": "timeout-servidor-que-no-responde",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts",
+      "evidence": "El transporte nunca responde; el plazo del cliente corta la espera.",
+      "expected": "timeout con el plazo configurado",
+      "observed": "{ kind: timeout, timeoutMs: 40 }"
+    },
+    {
+      "id": "timeout-cuerpo-detenido",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts",
+      "evidence": "Llegan las cabeceras pero el cuerpo no; el plazo cubre el intercambio completo, cuerpo incluido.",
+      "expected": "timeout",
+      "observed": "{ kind: timeout, timeoutMs: 40 }"
+    },
+    {
+      "id": "timeout-aborta-la-peticion",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts",
+      "evidence": "Al vencer el plazo la peticion recibe la senal de abortar.",
+      "expected": "timeout y peticion abortada",
+      "observed": "{ kind: timeout } y la senal abort recibida"
+    },
+    {
+      "id": "slow-backend-real",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/remote-backend.test.ts",
+      "evidence": "Variante slow del backend real, que tarda 1.2 s.",
+      "expected": "timeout con plazo de 300 ms; exito con plazo de 5 s",
+      "observed": "{ kind: timeout, timeoutMs: 300 } y luego ok"
+    },
+    {
+      "id": "server-error-500",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts && npm test -- --ci --runInBand course-tests/remote-backend.test.ts",
+      "evidence": "Variante server_error del backend real y respuestas simuladas 500 y 503.",
+      "expected": "server_error con el estado",
+      "observed": "{ kind: server_error, status: 500 }"
+    },
+    {
+      "id": "rate-limited-429",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts && npm test -- --ci --runInBand course-tests/remote-backend.test.ts",
+      "evidence": "Variante rate_limited del backend real con Retry-After: 1. Un Retry-After ilegible se reporta como desconocido.",
+      "expected": "rate_limited con retryAfterMs",
+      "observed": "{ kind: rate_limited, retryAfterMs: 1000 }; ilegible -> retryAfterMs null"
+    },
+    {
+      "id": "network-conexion-rechazada",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts",
+      "evidence": "Un transporte que rechaza o que lanza al llamarse se reporta como network, no como timeout.",
+      "expected": "network",
+      "observed": "{ kind: network }"
+    },
+    {
+      "id": "transporte-sin-estado-http",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts",
+      "evidence": "Caso observado, no hipotetico: el polyfill de fetch de React Native dentro de Jest resuelve con estado indefinido. Antes de corregirlo terminaba en rejected con un estado que no era numero.",
+      "expected": "invalid_response invalid_status",
+      "observed": "{ kind: invalid_response, reason: invalid_status }"
+    },
+    {
+      "id": "autorizacion-401-403-404",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts && npm test -- --ci --runInBand course-tests/remote-backend.test.ts",
+      "evidence": "Contra el backend real: token incorrecto, incidencia de otro reportante e incidencia inexistente.",
+      "expected": "unauthorized, forbidden y not_found distinguibles",
+      "observed": "{ kind: unauthorized }, { kind: forbidden }, { kind: not_found }"
+    },
+    {
+      "id": "rechazo-con-codigo-del-servidor",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts && npm test -- --ci --runInBand course-tests/remote-backend.test.ts",
+      "evidence": "Crear con una categoria invalida en el backend real.",
+      "expected": "rejected con estado y codigo",
+      "observed": "{ kind: rejected, status: 422, code: invalid_incident }"
+    },
+    {
+      "id": "respuesta-perdida-despues-de-guardar",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/remote-backend.test.ts",
+      "evidence": "Variante timeout_after_commit del backend real: el servidor guarda y responde a los 1.5 s; el cliente corta a los 400 ms. Se reintenta con la misma clave de idempotencia.",
+      "expected": "timeout, luego un replay marcado como duplicado y una sola copia en la lista",
+      "observed": "{ kind: timeout, timeoutMs: 400 }, luego duplicate: true y exactamente 1 incidencia con esa descripcion"
+    },
+    {
+      "id": "ninguna-excepcion-escapa",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts",
+      "evidence": "list, get y create resuelven en seis escenarios: valido, malformado, error de servidor, sin respuesta, rechazo y respuesta null. Un sumidero de registros que lanza no convierte el resultado en excepcion.",
+      "expected": "todas las promesas resuelven",
+      "observed": "ninguna promesa rechazada en 18 llamadas"
+    },
+    {
+      "id": "registros-saneados",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/remote-failures.test.ts && npm test -- --ci --runInBand course-tests/remote-backend.test.ts",
+      "evidence": "En todas las rutas, simuladas y reales, los registros no contienen el token, la palabra Bearer, el actor, la URL, la descripcion, la ubicacion ni la clave de idempotencia. Conservan operacion, tipo de resultado, estado y duracion.",
+      "expected": "registros sin datos sensibles",
+      "observed": "ninguna de las cadenas prohibidas aparece en los registros"
+    }
+  ]
+}
