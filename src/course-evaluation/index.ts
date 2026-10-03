@@ -8,6 +8,7 @@ import type {
 } from './contracts';
 import type { IncidentLocation } from '../campusops/contracts';
 import { redactSensitive } from '../campusops/domain/logRedaction';
+import { parseRemoteResource as parseRemoteEnvelope } from '../campusops/infrastructure/remote/remoteResource';
 
 function pending(name: string): never {
   throw new Error(`${name} must be implemented in the assigned week`);
@@ -21,8 +22,12 @@ export function redactForTelemetry(input: unknown): unknown {
   return redactSensitive(input);
 }
 
-export function parseRemoteResource(_input: unknown): ParseResult {
-  return pending('parseRemoteResource');
+/**
+ * Week 05 adapter. It delegates to the envelope validation the HTTP client
+ * uses, so the evaluated contract and the one the app enforces are one rule.
+ */
+export function parseRemoteResource(input: unknown): ParseResult {
+  return parseRemoteEnvelope(input);
 }
 
 export function coordinateRefresh(_events: readonly AuthEvent[]): Readonly<{
