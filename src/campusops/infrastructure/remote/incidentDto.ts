@@ -67,7 +67,10 @@ export function toRemoteIncident(resource: RemoteResource): DtoMapping {
   }
 
   if (payload === null) {
-    return { ok: true, value: { kind: 'withheld', summary: { id, version, status } } };
+    // Regresion bajo prueba: un payload nulo se trata como datos faltantes,
+    // la forma de cambio que aparece cuando "sin datos" se confunde con
+    // "datos rotos".
+    return invalid('payload_missing');
   }
 
   const { category, description, location, reporterId, assignedTechnicianId } = payload;
