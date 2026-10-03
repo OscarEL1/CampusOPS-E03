@@ -1,0 +1,50 @@
+# AC-03 falla declarada semana 05 - un payload nulo valido se trata como formato invalido
+
+Datos ficticios unicamente.
+
+## Diagnostico - estado roto
+
+toRemoteIncident devuelve invalid('payload_missing') para un sobre valido con payload null,
+en lugar de producir una incidencia retenida (withheld). Confunde vacio con invalido.
+
+$ npm run typecheck
+  codigo de salida: 0
+$ npm run lint
+  codigo de salida: 0
+
+$ npm test -- --ci --runInBand course-tests/public/week-05.test.ts
+Tests:       5 passed, 5 total
+  codigo de salida: 0
+  La prueba publica NO observa esta regresion: valida el sobre, y el sobre con payload
+  null sigue siendo valido. El error esta un paso despues, en el mapeo al dominio.
+
+$ npm run test:cloud
+    +     "reason": "item_0_payload_missing",
+    +     "reason": "item_0_payload_missing",
+    +   "reason": "payload_missing",
+Tests:       4 failed, 94 passed, 98 total
+  Pruebas que detectan la regresion, incluida la del backend real:
+    - published backend variants > nullable: the same incident arrives withheld, with nothing invented
+    - valid, empty and invalid responses stay distinct > nullable: a null payload is withheld, not an error and not invalid
+    - valid, empty and invalid responses stay distinct > a detail with a null payload is withheld
+    - DTO to domain mapping > a null payload becomes withheld with only id, version and status
+  codigo de salida: 1
+
+## Resultado corregido
+
+toRemoteIncident vuelve a producir withheld para un payload null: la app conserva id,
+version y estado, no inventa categoria, descripcion ni ubicacion, y no lo trata como error.
+
+$ npm run typecheck
+  codigo de salida: 0
+$ npm run lint
+  codigo de salida: 0
+
+$ npm run test:cloud
+Test Suites: 3 passed, 3 total
+Tests:       98 passed, 98 total
+  codigo de salida: 0
+
+$ npm test -- --ci --runInBand course-tests/public/week-05.test.ts
+Tests:       5 passed, 5 total
+  codigo de salida: 0
