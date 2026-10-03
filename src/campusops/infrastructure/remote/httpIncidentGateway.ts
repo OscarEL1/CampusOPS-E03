@@ -52,7 +52,13 @@ type Exchange =
 
 type Transport =
   | Readonly<{ kind: 'response'; status: number; retryAfter: string | null; text: string }>
+  | Readonly<{ kind: 'invalid_status' }>
   | Readonly<{ kind: 'transport_error' }>;
+
+/** A status a real HTTP response can carry. Anything else is a broken transport, not a server answer. */
+function isHttpStatus(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 100 && value <= 599;
+}
 
 function failure<T>(value: RemoteFailure): RemoteResult<T> {
   return { ok: false, failure: value };
@@ -174,6 +180,12 @@ export function createHttpIncidentGateway(options: HttpIncidentGatewayOptions): 
                 signal: controller.signal,
               };
         const response = await options.fetchImpl(`${baseUrl}${path}`, init);
+        // Observed, not hypothetical: the React Native fetch polyfill inside
+        // Jest resolves with an undefined status. Without this check that
+        // became a `rejected` failure carrying a status that was not a number.
+        if (!isHttpStatus(response.status)) {
+          return { kind: 'invalid_status' };
+        }
         const text = await response.text();
         return { kind: 'response', status: response.status, retryAfter: response.headers.get('retry-after'), text };
       } catch {
@@ -185,6 +197,9 @@ export function createHttpIncidentGateway(options: HttpIncidentGatewayOptions): 
       const outcome = await Promise.race([attempt, deadline]);
       if (outcome === 'timeout') {
         return { ok: false, failure: { kind: 'timeout', timeoutMs } };
+      }
+      if (outcome.kind === 'invalid_status') {
+        return { ok: false, failure: { kind: 'invalid_response', reason: 'invalid_status' } };
       }
       if (outcome.kind === 'transport_error') {
         return {
