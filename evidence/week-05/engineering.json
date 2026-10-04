@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 5,
-  "commitSha": "68aee0027d02cf3a0a79a96bd0295d27b7f9d7e9",
+  "commitSha": "5f2e1736adf3bb88dd580b9f66a407ac433cab20",
   "decision": "Se mantiene un límite explícito en tres etapas. El adaptador HTTP recibe JSON desconocido y lo clasifica como resultado remoto o fallo tipado; remoteResource valida el sobre DTO sin dejar que campos no comprobados entren a la aplicación; incidentDto valida y traduce únicamente los campos necesarios a Incident o a una variante withheld cuando el payload es nulo. Las pantallas reciben objetos y resultados ya tipados, muestran mensajes derivados de RemoteFailure y nunca interpretan estados HTTP, razones internas o DTO sin validar. La creación conserva además una sola clave de idempotencia durante la vida del borrador, de modo que un reintento posterior a un timeout representa la misma intención.",
   "alternatives": [
     "Usar el DTO directamente en las pantallas: elimina el paso de mapeo, pero acopla la interfaz a campos y cambios del servidor, permite que datos sin validar lleguen al render y expone campos internos que la app no necesita.",
@@ -9,7 +9,7 @@
     "Tratar payload null como error: simplifica el tipo RemoteIncident, pero contradice el contrato publicado y confunde detalles retenidos de forma válida con datos corruptos, perdiendo el id, la versión y el estado que sí fueron entregados."
   ],
   "tradeoff": "La separación añade tipos, validadores y ramas explícitas que deben mantenerse cuando cambie el contrato. A cambio, el dominio no depende del formato remoto, una respuesta corrupta se detiene antes de llegar a la UI, un payload nulo conserva exactamente la información permitida y cada fallo produce un mensaje veraz sin filtrar detalles técnicos. Se acepta ese costo porque los 98 casos cloud verifican el límite remoto y la prueba de la pantalla demuestra que la misma intención de creación conserva su clave después de un timeout.",
-  "requirementIds": ["AC-01", "AC-02", "AC-03", "AC-04"],
+  "requirementIds": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05"],
   "verification": [
     {
       "command": "npm test -- --ci --runInBand course-tests/create-incident-screen.test.tsx",

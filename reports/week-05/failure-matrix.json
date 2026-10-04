@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "week": 5,
-  "commitSha": "7a3f3674de6e8ed4cac8f270a1ecf715cf786074",
-  "generatedAt": "2026-10-03T15:26:54.162511+00:00",
+  "commitSha": "5f2e1736adf3bb88dd580b9f66a407ac433cab20",
+  "generatedAt": "2026-10-04T15:26:59.621332+00:00",
   "status": "pass",
   "checks": [
     {
@@ -148,6 +148,15 @@
       "evidence": "Variante timeout_after_commit del backend real: el servidor guarda y responde a los 1.5 s; el cliente corta a los 400 ms. Se reintenta con la misma clave de idempotencia.",
       "expected": "timeout, luego un replay marcado como duplicado y una sola copia en la lista",
       "observed": "{ kind: timeout, timeoutMs: 400 }, luego duplicate: true y exactamente 1 incidencia con esa descripcion"
+    },
+    {
+      "id": "formulario-reintento-misma-clave",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/create-incident-screen.test.tsx",
+      "evidence": "Pantalla de creacion con una funcion create falsa: el primer envio termina en timeout y el reintento del mismo borrador recibe duplicate. Con campos vacios no se llama a create.",
+      "expected": "la misma clave de idempotencia en ambos envios y aviso de incidencia ya registrada",
+      "observed": "2 llamadas con clave identica y el texto 'Esta incidencia ya estaba registrada.'; 2 de 2 pruebas aprobadas"
     },
     {
       "id": "ninguna-excepcion-escapa",

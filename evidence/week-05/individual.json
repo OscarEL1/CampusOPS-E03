@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "week": 5,
+  "teamId": "Equipo-03",
+  "note": "El equipo esta integrado por dos personas. El profesor autorizo de forma explicita trabajar y entregar en equipo de dos para esta actividad. El contrato de evidencias exige exactamente tres registros en members, por lo que esa comprobacion de esquema falla de forma conocida y declarada; ocurre desde la semana 01. No se agrego un tercer integrante porque la guia de entrega prohibe identidades inventadas o compartidas. Los dos registros siguientes corresponden a personas reales con su identidad Git registrada.",
+  "members": [
+    {
+      "studentId": "a3523110665",
+      "commitShas": [
+        "ca1151d12a5e8ee4fbcb4c5abd8d346aefd7eaf0",
+        "7c0a7203e7506edd397f24013cbe6098ce5e5d1a",
+        "891b22088247a79eb5c017b1952e3e54c445078a",
+        "c7885d564f95b8867a5d311fd96e34cfa2cccbe1",
+        "804643fe9afa949758dacf1412aa246c68c338d4",
+        "b59afdf5a4316640375d7693ecc311ed3b215b36",
+        "911e61a2a7fef46643a9c28450fae34480b8bda0",
+        "6f84f87ec92f9544fed79628249a66994cdb1dd7",
+        "7a3f3674de6e8ed4cac8f270a1ecf715cf786074",
+        "a247dd51015515b98659c84d84e91d75ed1ddc59"
+      ],
+      "files": [
+        ".github/workflows/week-05-cliente-cloud-feedback.yml",
+        "src/campusops/infrastructure/remote/remoteResource.ts",
+        "src/campusops/infrastructure/remote/incidentDto.ts",
+        "src/campusops/infrastructure/remote/httpIncidentGateway.ts",
+        "src/campusops/domain/incidentGateway.ts",
+        "src/campusops/application/remoteIncidentQueries.ts",
+        "src/campusops/ui/remoteFailureMessage.ts",
+        "src/campusops/ui/IncidentListScreen.tsx",
+        "src/app/composition.ts",
+        "src/course-evaluation/index.ts",
+        "App.tsx",
+        "course-tests/remote-contract.test.ts",
+        "course-tests/remote-failures.test.ts",
+        "course-tests/remote-backend.test.ts",
+        "package.json",
+        "reports/week-05/contract-tests.json",
+        "reports/week-05/failure-matrix.json",
+        "reports/week-05/failure-01-payload-nulo-como-invalido.log"
+      ],
+      "tests": [
+        "npm run test:cloud",
+        "npm run backend:self-test",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run audit:ci",
+        "npm run test:smoke",
+        "npm run test:security",
+        "npm run test:negative",
+        "npm test -- --ci --runInBand course-tests/public/week-05.test.ts"
+      ],
+      "reviews": [
+        "Pull request #10 feat/alejandro-week05-create-incident: revise el formulario de creacion, docs/api-contract.md y engineering.json, y ejecute sobre su rama typecheck, la prueba del formulario (2 de 2), test:cloud (98 de 98), smoke y la prueba publica de la semana 05. Senale como observacion no bloqueante que si el usuario corrige un campo despues de un error el formulario reenvia la misma clave de idempotencia con un cuerpo distinto."
+      ],
+      "prediction": "Un payload null con sobre valido no es un error ni un formato invalido: la app debe conservar id, version y estado sin inventar el resto. Esperaba que tratarlo como invalido no lo detectaran ni el compilador, ni el linter, ni la prueba publica de la semana 05, porque esa prueba solo valida el sobre.",
+      "command": "npm run test:cloud",
+      "observedResult": "98 pruebas aprobadas con codigo de salida 0 sobre el commit 5f2e1736adf3bb88dd580b9f66a407ac433cab20, incluidas 16 contra el backend didactico real en un puerto efimero. La falla declarada se reprodujo en el commit 6f84f87: npm run typecheck y npm run lint salieron 0 y la prueba publica de la semana 05 paso 5 de 5, mientras que npm run test:cloud fallo 4 de 98, incluida la variante nullable del backend real. Corregido en el commit 7a3f367.",
+      "explanation": "Implemente el cliente cloud en tres limites: remoteResource valida el sobre y descarta campos futuros, incidentDto traduce el DTO a la Incident del dominio sin copiar notas, evidencia ni historial, y httpIncidentGateway aplica un plazo propio que cubre el cuerpo, clasifica nueve tipos de fallo sin lanzar excepciones y registra solo datos saneados. Conecte parseRemoteResource del adaptador evaluado a la misma regla. Durante las pruebas descubri que el fetch de Jest es el polyfill de React Native y devuelve un estado indefinido; lo converti en invalid_response y use node:http para la integracion real."
+    },
+    {
+      "studentId": "AlexD39",
+      "commitShas": [
+        "68aee0027d02cf3a0a79a96bd0295d27b7f9d7e9",
+        "6619f150963f101825409f78f008e4972cdf21f2"
+      ],
+      "files": [
+        "src/campusops/ui/CreateIncidentScreen.tsx",
+        "course-tests/create-incident-screen.test.tsx",
+        "App.tsx",
+        "docs/api-contract.md",
+        "evidence/week-05/engineering.json"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand course-tests/create-incident-screen.test.tsx",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run test:cloud",
+        "npm run test:smoke"
+      ],
+      "reviews": [],
+      "prediction": "Si la respuesta de una creacion se pierde despues de que el servidor la guardo, el reintento debe representar la misma intencion; una clave de idempotencia nueva en cada intento crearia una incidencia duplicada.",
+      "command": "npm test -- --ci --runInBand course-tests/create-incident-screen.test.tsx",
+      "observedResult": "2 pruebas aprobadas con codigo de salida 0. Con una funcion create falsa el primer envio termina en timeout y el reintento recibe duplicate: ambas llamadas usan exactamente la misma clave y la pantalla muestra 'Esta incidencia ya estaba registrada.'. Con campos vacios no se llama a create.",
+      "explanation": "Implemente la pantalla de creacion de incidencias: valida categoria, descripcion y ubicacion antes de enviar, genera la clave de idempotencia una sola vez por borrador y la reutiliza en los reintentos, y muestra los fallos con describeRemoteFailure sin exponer codigos internos. La integre en App.tsx con un boton para abrirla. Escribi docs/api-contract.md con las solicitudes y respuestas, las reglas del sobre, la separacion entre DTO y dominio, el significado de un payload nulo, los tipos de fallo, el plazo y la idempotencia, y la decision de ingenieria sobre el limite entre DTO, dominio y errores."
+    }
+  ]
+}
