@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { getBackendHealth } from './src/api/courseBackend';
 import { createCampusOpsApp } from './src/app/composition';
 import type { RemoteFailure, RemoteIncident } from './src/campusops/domain/incidentGateway';
+import { CreateIncidentScreen } from './src/campusops/ui/CreateIncidentScreen';
 import { IncidentDetailScreen } from './src/campusops/ui/IncidentDetailScreen';
 import { IncidentListScreen } from './src/campusops/ui/IncidentListScreen';
 import { describeRemoteFailure } from './src/campusops/ui/remoteFailureMessage';
@@ -20,6 +21,7 @@ export default function App() {
   const [list, setList] = useState<ListState>({ phase: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+  const [creatingIncident, setCreatingIncident] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -64,8 +66,21 @@ export default function App() {
         <Text>Incidencias del campus · entorno académico ficticio</Text>
         <Text testID="backend-status">Backend: {status}</Text>
       </View>
-      {list.phase === 'loading' ? <Text testID="incidents-loading">Cargando incidencias…</Text> : null}
-      {list.phase === 'failed' ? (
+      {!creatingIncident && selectedIncidentId === null ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setCreatingIncident(true)}
+          style={styles.create}
+          testID="open-create-incident"
+        >
+          <Text style={styles.createText}>Registrar incidencia</Text>
+        </Pressable>
+      ) : null}
+      {creatingIncident ? (
+        <CreateIncidentScreen create={app.remoteIncidents.create} onBack={() => setCreatingIncident(false)} />
+      ) : null}
+      {!creatingIncident && list.phase === 'loading' ? <Text testID="incidents-loading">Cargando incidencias…</Text> : null}
+      {!creatingIncident && list.phase === 'failed' ? (
         <View style={styles.card} testID="incidents-error">
           <Text>{describeRemoteFailure(list.failure)}</Text>
           <Pressable
@@ -81,10 +96,10 @@ export default function App() {
           </Pressable>
         </View>
       ) : null}
-      {list.phase === 'ready' && selectedIncident ? (
+      {!creatingIncident && list.phase === 'ready' && selectedIncident ? (
         <IncidentDetailScreen incident={selectedIncident} onBack={() => setSelectedIncidentId(null)} />
       ) : null}
-      {list.phase === 'ready' && !selectedIncident ? (
+      {!creatingIncident && list.phase === 'ready' && !selectedIncident ? (
         <IncidentListScreen items={list.items} onSelect={setSelectedIncidentId} />
       ) : null}
       <StatusBar style="auto" />
@@ -98,4 +113,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '700' },
   retry: { alignSelf: 'flex-start', borderRadius: 8, borderWidth: 1, borderColor: '#1d4ed8', paddingHorizontal: 14, paddingVertical: 8 },
   retryText: { color: '#1d4ed8', fontWeight: '600' },
+  create: { alignSelf: 'flex-start', backgroundColor: '#1d4ed8', borderRadius: 8, marginHorizontal: 20, padding: 12 },
+  createText: { color: '#ffffff', fontWeight: '700' },
 });
