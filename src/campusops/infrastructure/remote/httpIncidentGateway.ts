@@ -7,6 +7,7 @@ import type {
   RemoteResult,
 } from '../../domain/incidentGateway';
 import { redactSensitive } from '../../domain/logRedaction';
+import type { AccessTokenSource, SessionCredentials } from '../../domain/session';
 import { toRemoteIncident } from './incidentDto';
 import { inspectRemoteResource, isPlainObject } from './remoteResource';
 
@@ -31,9 +32,15 @@ export type LogSink = (entry: unknown) => void;
 
 export type HttpIncidentGatewayOptions = Readonly<{
   baseUrl: string;
-  /** Supplied by the composition root; this module never holds a credential. */
-  accessToken: string;
-  actorId: string;
+  /**
+   * Credentials come from the composition root; this module never stores one.
+   * The session is asked before every request and after a 401. A fixed
+   * `accessToken` + `actorId` pair, kept for the week 05 suites, is never
+   * renewed. With neither, every request ends in `unauthorized` unsent.
+   */
+  session?: AccessTokenSource;
+  accessToken?: string;
+  actorId?: string;
   fetchImpl: FetchLike;
   timeoutMs?: number;
   /** Selects a published backend variant. For controlled tests and demos only. */
@@ -125,6 +132,17 @@ function parseIncident(json: unknown, context: string): RemoteResult<RemoteIncid
   return { ok: true, value: mapped.value };
 }
 
+/** Module-wide, so two gateways sharing one session never reuse a request id. */
+let requestSequence = 0;
+
+function fixedCredentials(accessToken: string, actorId: string): AccessTokenSource {
+  const credentials: SessionCredentials = { accessToken, actorId, generation: 0 };
+  return {
+    authorize: async () => credentials,
+    renew: async () => null,
+  };
+}
+
 export function createHttpIncidentGateway(options: HttpIncidentGatewayOptions): IncidentGateway {
   const baseUrl = options.baseUrl.replace(/\/+$/, '');
   const timeoutMs =
@@ -134,11 +152,17 @@ export function createHttpIncidentGateway(options: HttpIncidentGatewayOptions): 
   const log = options.log ?? (() => undefined);
   const now = options.now ?? (() => Date.now());
 
-  function headersFor(extra: Readonly<Record<string, string>>): Record<string, string> {
+  const source: AccessTokenSource =
+    options.session ??
+    (options.accessToken !== undefined && options.actorId !== undefined
+      ? fixedCredentials(options.accessToken, options.actorId)
+      : { authorize: async () => null, renew: async () => null });
+
+  function headersFor(credentials: SessionCredentials, extra: Readonly<Record<string, string>>): Record<string, string> {
     const headers: Record<string, string> = {
       Accept: 'application/json',
-      Authorization: `Bearer ${options.accessToken}`,
-      'X-Course-Actor': options.actorId,
+      Authorization: `Bearer ${credentials.accessToken}`,
+      'X-Course-Actor': credentials.actorId,
       ...extra,
     };
     if (options.scenario !== undefined) {
@@ -154,11 +178,12 @@ export function createHttpIncidentGateway(options: HttpIncidentGatewayOptions): 
    * here rejects: a refused connection, an abort and a thrown fetch all become
    * a typed failure.
    */
-  async function exchange(
+  async function exchangeOnce(
+    credentials: SessionCredentials,
     method: 'GET' | 'POST',
     path: string,
-    body?: string,
-    extraHeaders: Readonly<Record<string, string>> = {},
+    body: string | undefined,
+    extraHeaders: Readonly<Record<string, string>>,
   ): Promise<Exchange> {
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -172,10 +197,10 @@ export function createHttpIncidentGateway(options: HttpIncidentGatewayOptions): 
       try {
         const init: HttpRequest =
           body === undefined
-            ? { method, headers: headersFor(extraHeaders), signal: controller.signal }
+            ? { method, headers: headersFor(credentials, extraHeaders), signal: controller.signal }
             : {
                 method,
-                headers: headersFor({ 'Content-Type': 'application/json', ...extraHeaders }),
+                headers: headersFor(credentials, { 'Content-Type': 'application/json', ...extraHeaders }),
                 body,
                 signal: controller.signal,
               };
@@ -211,6 +236,35 @@ export function createHttpIncidentGateway(options: HttpIncidentGatewayOptions): 
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  /**
+   * One operation with the session: credentials before the request, and after
+   * a 401 one renewal and one retry at most. The renewal itself is shared by
+   * every request that hits 401 at the same time (see sessionRefresh). A POST
+   * retry repeats the same Idempotency-Key, so it cannot create a duplicate.
+   */
+  async function exchange(
+    method: 'GET' | 'POST',
+    path: string,
+    body?: string,
+    extraHeaders: Readonly<Record<string, string>> = {},
+  ): Promise<Exchange> {
+    requestSequence += 1;
+    const requestId = `req-${String(requestSequence)}`;
+    const credentials = await source.authorize(requestId);
+    if (credentials === null) {
+      return { ok: false, failure: { kind: 'unauthorized' } };
+    }
+    const first = await exchangeOnce(credentials, method, path, body, extraHeaders);
+    if (first.ok || first.failure.kind !== 'unauthorized') {
+      return first;
+    }
+    const renewed = await source.renew(requestId, credentials);
+    if (renewed === null) {
+      return first;
+    }
+    return exchangeOnce(renewed, method, path, body, extraHeaders);
   }
 
   /**
