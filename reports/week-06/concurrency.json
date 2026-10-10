@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "week": 6,
+  "commitSha": "d63d4634dc2c4158cfa9730692248cf122085a6d",
+  "generatedAt": "2026-10-10T21:32:21.484467+00:00",
+  "status": "pass",
+  "checks": [
+    {
+      "id": "tres-401-un-refresh",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/session-refresh.test.ts && npm test -- --ci --runInBand course-tests/session-manager.test.ts",
+      "evidence": "Tres solicitudes del mismo token reciben 401 a la vez.",
+      "expected": "1 refresh y un reintento por solicitud",
+      "observed": "refreshCalls 1; retried [a, b, c]; las tres reciben el token de generacion 2"
+    },
+    {
+      "id": "se-une-al-refresh-en-curso",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/session-refresh.test.ts",
+      "evidence": "Un 401 que llega mientras el refresh esta en curso se agrega a la espera, no inicia otro.",
+      "expected": "1 refresh y 2 solicitudes en espera",
+      "observed": "refreshInFlight true; waiting [a, b]; refreshCalls 1"
+    },
+    {
+      "id": "401-obsoleto-sin-refresh",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/session-refresh.test.ts && npm test -- --ci --runInBand course-tests/session-manager.test.ts",
+      "evidence": "Un 401 tardio con el token de una generacion anterior se reintenta con el token vigente.",
+      "expected": "reintento sin nuevo refresh",
+      "observed": "retried [a, late]; refreshCalls 1"
+    },
+    {
+      "id": "reintento-limitado",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/session-refresh.test.ts && npm test -- --ci --runInBand course-tests/session-manager.test.ts",
+      "evidence": "Una solicitud que vuelve a recibir 401 con el token renovado falla en lugar de renovar otra vez (MAX_RETRIES_PER_REQUEST = 1).",
+      "expected": "la solicitud falla sin otro refresh",
+      "observed": "failed [a]; refreshCalls 1; renew devuelve null"
+    },
+    {
+      "id": "servidor-401-permanente-sin-bucle",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/session-refresh.test.ts && npm test -- --ci --runInBand course-tests/session-manager.test.ts",
+      "evidence": "100 eventos 401 de la misma solicitud en dos generaciones; en el cliente HTTP, un servidor que siempre responde 401.",
+      "expected": "un refresh por generacion y ninguna repeticion",
+      "observed": "refreshCalls 1, retried [a]; cliente: 2 peticiones, 1 refresh, resultado unauthorized"
+    },
+    {
+      "id": "refresh-fallido-sin-reintentos",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/session-refresh.test.ts && npm test -- --ci --runInBand course-tests/session-backend.test.ts",
+      "evidence": "Refresh rechazado con tres solicitudes esperando y un 401 posterior.",
+      "expected": "ningun reintento y ningun refresh adicional",
+      "observed": "retried []; failed [a, b, c]; backend real: 1 refresh, 3 peticiones de incidencias y ninguna mas despues"
+    },
+    {
+      "id": "refresh-obsoleto-ignorado",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/session-refresh.test.ts",
+      "evidence": "Un resultado de refresh sin refresh en curso, o con una generacion no mas nueva que la activa, se ignora.",
+      "expected": "estado sin cambios",
+      "observed": "el estado es identico al anterior; el token sigue siendo el de generacion 1"
+    },
+    {
+      "id": "refresh-tras-logout-ignorado",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/session-refresh.test.ts && npm test -- --ci --runInBand course-tests/session-manager.test.ts",
+      "evidence": "El refresh responde despues del logout (la falla declarada de esta semana).",
+      "expected": "la sesion no reaparece y no se guarda ningun token",
+      "observed": "anonymous; almacen null; generaciones guardadas [1]"
+    },
+    {
+      "id": "backend-real-tres-operaciones",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/session-backend.test.ts",
+      "evidence": "Lista, detalle y creacion con un token que el backend ya no acepta, en paralelo con Promise.all.",
+      "expected": "3 respuestas 401, 1 refresh real y 6 peticiones de incidencias",
+      "observed": "3 x 401, 1 POST /v1/session/refresh, 6 peticiones, las tres operaciones ok; sesion en generacion 5 con course-refresh-1"
+    },
+    {
+      "id": "reintento-post-misma-clave",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/session-manager.test.ts",
+      "evidence": "La creacion reintentada despues del refresh repite la misma Idempotency-Key, asi que no puede duplicar la incidencia.",
+      "expected": "dos POST con la misma clave",
+      "observed": "[fixture-key-0001, fixture-key-0001]; los 3 reintentos llevan el token de generacion 2"
+    },
+    {
+      "id": "expiracion-concurrente",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/session-manager.test.ts && npm test -- --ci --runInBand course-tests/session-backend.test.ts",
+      "evidence": "Tres solicitudes despues de la expiracion por reloj comparten el mismo refresh antes de enviarse.",
+      "expected": "1 refresh y 0 respuestas 401",
+      "observed": "generaciones [2, 2, 2]; backend real: 1 refresh y 0 x 401"
+    },
+    {
+      "id": "adaptador-evaluado",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/public/week-06.test.ts",
+      "evidence": "coordinateRefresh reproduce los eventos con la misma politica que usa la app.",
+      "expected": "el resultado publicado",
+      "observed": "2 de 2 pruebas publicas aprobadas"
+    }
+  ]
+}

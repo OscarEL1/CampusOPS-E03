@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "week": 6,
+  "commitSha": "d63d4634dc2c4158cfa9730692248cf122085a6d",
+  "generatedAt": "2026-10-10T21:32:21.484467+00:00",
+  "status": "pass",
+  "checks": [
+    {
+      "id": "login-actor-de-prueba",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/session-backend.test.ts",
+      "evidence": "POST /v1/session/login con technician-1 contra el backend local: la sesion queda persistida con actorId, rol y generacion 1, y el backend acepta su token al listar (aparece campus-inc-001).",
+      "expected": "sesion autenticada y persistida",
+      "observed": "{ ok: true, actor: { id: technician-1, role: technician } }, generation 1"
+    },
+    {
+      "id": "login-rechazado",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/session-backend.test.ts",
+      "evidence": "Un actor que no existe en el simulador recibe 401 unknown_fixture_actor.",
+      "expected": "rejected sin escribir el almacen",
+      "observed": "{ ok: false, failure: { kind: rejected } }, almacen null, estado anonymous"
+    },
+    {
+      "id": "restaurar-sesion",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/session-manager.test.ts",
+      "evidence": "restore lee una sesion persistida; un almacen vacio o que lanza al leer se trata como sin sesion.",
+      "expected": "authenticated con sesion valida; anonymous sin ella o con almacen roto",
+      "observed": "authenticated technician-1; anonymous en ambos casos limite"
+    },
+    {
+      "id": "almacen-rechaza-forma-anterior",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/secure-session-store.test.ts",
+      "evidence": "SecureSessionStore valida refreshToken, expiresAt y generation; un valor guardado con la forma de la semana 04 o malformado se borra y no se convierte en sesion.",
+      "expected": "null y borrado del valor invalido",
+      "observed": "3 de 3 pruebas aprobadas"
+    },
+    {
+      "id": "expiracion-por-reloj",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/session-manager.test.ts && npm test -- --ci --runInBand course-tests/session-backend.test.ts",
+      "evidence": "Reloj controlable inyectado: a 54 s el token se envia tal cual; a 55 s (margen de 5 s antes de 60 s) se renueva antes de enviarse. Contra el backend real, tras avanzar 61 s, tres operaciones se completan sin ningun 401.",
+      "expected": "sin refresh antes del margen; un refresh antes de enviar despues",
+      "observed": "0 refresh a 54 s; 1 refresh a 55 s para 3 solicitudes; backend real: 1 refresh 200 y 0 respuestas 401"
+    },
+    {
+      "id": "sin-sesion-no-se-envia",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/session-manager.test.ts && npm test -- --ci --runInBand course-tests/session-backend.test.ts",
+      "evidence": "Sin sesion, o despues del logout, el cliente HTTP devuelve unauthorized sin llamar al transporte.",
+      "expected": "unauthorized y 0 peticiones",
+      "observed": "{ kind: unauthorized } y el contador de peticiones sin cambios"
+    },
+    {
+      "id": "refresh-rechazado-vuelve-a-anonimo",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/session-manager.test.ts && npm test -- --ci --runInBand course-tests/session-backend.test.ts",
+      "evidence": "Refresh con un refreshToken revocado: el backend responde 401 invalid_grant. La sesion pasa a anonymous, se borra del almacen y las solicitudes que esperaban fallan.",
+      "expected": "anonymous, almacen vacio, ninguna solicitud reintentada",
+      "observed": "estados refreshing -> anonymous; almacen null; 3 resultados unauthorized; 1 llamada a /v1/session/refresh"
+    },
+    {
+      "id": "refresh-no-disponible-conserva-sesion",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/session-manager.test.ts",
+      "evidence": "Un refresh sin respuesta util (red, plazo o 5xx) no demuestra que la sesion sea invalida: se conserva, no se borra el almacen y fallan solo las solicitudes que esperaban.",
+      "expected": "authenticated, almacen intacto, solicitudes en espera con null",
+      "observed": "authenticated, generation 1, 0 borrados, [null, null]"
+    },
+    {
+      "id": "logout-borra-sesion-persistida",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/session-manager.test.ts && npm test -- --ci --runInBand course-tests/session-backend.test.ts && npm test -- --ci --runInBand course-tests/public/week-06.test.ts",
+      "evidence": "logout borra la sesion del almacen, deja el estado anonymous y la siguiente solicitud no se envia. La prueba publica comprueba persistedToken null tras logout.",
+      "expected": "almacen null y sin token persistido",
+      "observed": "almacen null, 1 borrado, authorize -> null; publica 2 de 2"
+    },
+    {
+      "id": "tokens-fuera-de-los-logs",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/session-manager.test.ts",
+      "evidence": "Todo el ciclo (login, refresh, logout) con un sumidero de registros: ninguna entrada contiene los tokens de acceso ni de renovacion ni la palabra Bearer. Los registros pasan por redactSensitive de la semana 04.",
+      "expected": "ningun token en los registros",
+      "observed": "mas de 3 entradas y ninguna cadena prohibida"
+    },
+    {
+      "id": "falla-01-refresh-tras-logout",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "git show 803fb981aba50cc5c4be7123784b548bfce54207 -- src/campusops/application/sessionManager.ts",
+      "evidence": "Falla declarada reproducida en el commit 803fb98: runRefresh dejo de comparar la epoca de la sesion, asi que un refresh que respondia despues del logout volvia a guardar los tokens renovados. npm run typecheck, npm run lint y la prueba publica de la semana 06 salieron 0; solo npm run test:session fallo, 1 de 41, mostrando la sesion de generacion 2 persistida despues del logout. Corregido en el commit c303492. Diagnostico en reports/week-06/failure-01-refresh-tras-logout.log.",
+      "expected": "la falla se detecta y la correccion la elimina",
+      "observed": "1 de 41 fallida en 803fb98; 41 de 41 en c303492"
+    }
+  ]
+}
