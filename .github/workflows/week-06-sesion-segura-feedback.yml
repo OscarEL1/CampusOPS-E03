@@ -21,6 +21,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 2
       - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -32,6 +35,8 @@ jobs:
         run: npm run bundle:release
       - name: AC-01 — reproducibility
         run: make verify-week-06
+      - name: Accumulated security, cloud client and session checks
+        run: npm run test:security && npm run test:negative && npm run test:cloud && npm run test:session
       - name: AC-02 — public behavior
         run: make public-test-week-06
       - name: AC-03 — declared failure evidence
