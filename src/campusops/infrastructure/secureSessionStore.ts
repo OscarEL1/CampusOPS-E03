@@ -18,11 +18,22 @@ function isStoredSession(value: unknown): value is StoredSession {
     candidate.actorId.length > 0 &&
     (candidate.role === 'reporter' || candidate.role === 'technician' || candidate.role === 'coordinator') &&
     typeof candidate.accessToken === 'string' &&
-    candidate.accessToken.length > 0
+    candidate.accessToken.length > 0 &&
+    typeof candidate.refreshToken === 'string' &&
+    candidate.refreshToken.length > 0 &&
+    typeof candidate.expiresAt === 'number' &&
+    Number.isFinite(candidate.expiresAt) &&
+    typeof candidate.generation === 'number' &&
+    Number.isInteger(candidate.generation) &&
+    candidate.generation >= 0
   );
 }
 
-/** Persists the future authenticated session in the platform keychain/keystore. */
+/**
+ * Persists the authenticated session in the platform keychain/keystore. A value
+ * saved by an earlier shape (week 04 had no refresh token) fails validation and
+ * is deleted, so it can never become a session.
+ */
 export class SecureSessionStore implements SessionStore {
   async save(session: StoredSession): Promise<void> {
     await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(session), STORE_OPTIONS);

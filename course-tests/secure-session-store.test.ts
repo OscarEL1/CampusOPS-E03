@@ -15,6 +15,9 @@ const FICTIONAL_SESSION: StoredSession = {
   actorId: 'campus-reporter-demo-401',
   role: 'reporter',
   accessToken: 'fictional-token-for-storage-test',
+  refreshToken: 'fictional-refresh-for-storage-test',
+  expiresAt: 1_800_000_000_000,
+  generation: 1,
 };
 
 const mockedSet = jest.mocked(SecureStore.setItemAsync);
