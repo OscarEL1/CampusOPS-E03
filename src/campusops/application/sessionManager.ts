@@ -131,6 +131,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   }
 
   async function runRefresh(): Promise<void> {
+    const startedEpoch = epoch;
     const current = session;
     if (current === null) {
       return;
@@ -141,6 +142,11 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       outcome = await options.authApi.refresh(current.refreshToken);
     } catch {
       outcome = { ok: false, failure: { kind: 'unavailable' } };
+    }
+    if (startedEpoch !== epoch) {
+      // A logout or a new login happened meanwhile: this answer is obsolete.
+      log({ refresh: 'obsolete' });
+      return;
     }
     if (outcome.ok) {
       const next: StoredSession = {
@@ -156,6 +162,10 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         // A renewed session that cannot be persisted is not kept half-saved.
         log({ refresh: 'not_persisted' });
         await failRefresh();
+        return;
+      }
+      if (startedEpoch !== epoch) {
+        log({ refresh: 'obsolete' });
         return;
       }
       session = next;
