@@ -8,6 +8,7 @@ import type {
 } from './contracts';
 import type { IncidentLocation } from '../campusops/contracts';
 import { redactSensitive } from '../campusops/domain/logRedaction';
+import { initialRefreshState, reduceSessionEvent } from '../campusops/domain/sessionRefresh';
 import { parseRemoteResource as parseRemoteEnvelope } from '../campusops/infrastructure/remote/remoteResource';
 
 function pending(name: string): never {
@@ -30,14 +31,51 @@ export function parseRemoteResource(input: unknown): ParseResult {
   return parseRemoteEnvelope(input);
 }
 
-export function coordinateRefresh(_events: readonly AuthEvent[]): Readonly<{
+/**
+ * Week 06 adapter. It replays the events through the refresh policy the
+ * session manager uses, so the evaluated behaviour and the app's are one rule.
+ * A missing generation means the generation active at that moment.
+ */
+export function coordinateRefresh(events: readonly AuthEvent[]): Readonly<{
   status: 'anonymous' | 'authenticated';
   activeGeneration: number | null;
   refreshCalls: number;
   retriedRequestIds: readonly string[];
   persistedToken: string | null;
 }> {
-  return pending('coordinateRefresh');
+  const state = events.reduce((current, event) => {
+    const active = current.activeGeneration ?? 0;
+    switch (event.type) {
+      case 'request401':
+        return reduceSessionEvent(current, {
+          type: 'request401',
+          requestId: event.requestId ?? '',
+          generation: event.generation ?? active,
+        });
+      case 'refreshSucceeded':
+        if (typeof event.token !== 'string' || event.token.length === 0) {
+          return current;
+        }
+        return reduceSessionEvent(current, {
+          type: 'refreshSucceeded',
+          generation: event.generation ?? active + 1,
+          token: event.token,
+        });
+      case 'refreshFailed':
+        return reduceSessionEvent(current, { type: 'refreshFailed' });
+      case 'logout':
+        return reduceSessionEvent(current, { type: 'logout' });
+      default:
+        return current;
+    }
+  }, initialRefreshState());
+  return {
+    status: state.status,
+    activeGeneration: state.activeGeneration,
+    refreshCalls: state.refreshCalls,
+    retriedRequestIds: state.retried,
+    persistedToken: state.token,
+  };
 }
 
 export function resolveSync(
