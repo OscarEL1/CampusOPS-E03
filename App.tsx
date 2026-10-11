@@ -90,7 +90,7 @@ function SignedInHome({ app, actor }: Readonly<{ app: CampusOpsApp; actor: Campu
       ? (list.items.find(
           (item): item is Extract<RemoteIncident, { kind: 'available' }> =>
             item.kind === 'available' && item.incident.id === selectedIncidentId,
-        )?.incident ?? null)
+        ) ?? null)
       : null;
 
   return (
@@ -139,7 +139,25 @@ function SignedInHome({ app, actor }: Readonly<{ app: CampusOpsApp; actor: Campu
         </View>
       ) : null}
       {!creatingIncident && list.phase === 'ready' && selectedIncident ? (
-        <IncidentDetailScreen incident={selectedIncident} onBack={() => setSelectedIncidentId(null)} />
+        <IncidentDetailScreen
+          act={app.incidentActionsFor(actor).act}
+          actor={actor}
+          incident={selectedIncident.incident}
+          onBack={() => setSelectedIncidentId(null)}
+          onChanged={(changed) => {
+            setList((current) =>
+              current.phase === 'ready'
+                ? {
+                    phase: 'ready',
+                    items: current.items.map((item) =>
+                      item.kind === 'available' && item.incident.id === changed.incident.id ? changed : item,
+                    ),
+                  }
+                : current,
+            );
+          }}
+          version={selectedIncident.version}
+        />
       ) : null}
       {!creatingIncident && list.phase === 'ready' && !selectedIncident ? (
         <IncidentListScreen items={list.items} onSelect={setSelectedIncidentId} />

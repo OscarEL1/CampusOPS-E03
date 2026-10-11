@@ -36,3 +36,13 @@ export function canViewIncident(actor: CampusActor, incident: Incident): boolean
 export function canAssignIncident(actor: CampusActor): boolean {
   return actor.role === 'coordinator';
 }
+
+/** A technician may operate only the work currently assigned to them. */
+export function canResolveIncident(actor: CampusActor, incident: Incident): boolean {
+  return actor.role === 'technician' && incident.assignedTechnicianId === actor.id;
+}
+
+/** Closing and reopening are coordination decisions, independent of ownership. */
+export function canCloseOrReopenIncident(actor: CampusActor): boolean {
+  return actor.role === 'coordinator';
+}

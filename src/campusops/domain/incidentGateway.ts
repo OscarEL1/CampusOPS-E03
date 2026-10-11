@@ -57,6 +57,19 @@ export type CreatedIncident = Readonly<{
   duplicate: boolean;
 }>;
 
+export type IncidentAction = 'start' | 'resolve' | 'close' | 'reopen';
+
+/** Optional fields accepted by an incident action. Only resolve uses diagnosis. */
+export type IncidentActionInput = Readonly<{
+  diagnosis?: string;
+}>;
+
+/** The server representation after applying or replaying an action. */
+export type ActedIncident = Readonly<{
+  incident: RemoteIncident;
+  duplicate: boolean;
+}>;
+
 /**
  * Port for reading and creating incidents on a remote service.
  *
@@ -68,4 +81,11 @@ export interface IncidentGateway {
   list(): Promise<RemoteResult<readonly RemoteIncident[]>>;
   get(id: string): Promise<RemoteResult<RemoteIncident>>;
   create(input: NewIncident, idempotencyKey: string): Promise<RemoteResult<CreatedIncident>>;
+  act(
+    incidentId: string,
+    action: IncidentAction,
+    input: IncidentActionInput,
+    baseVersion: number,
+    idempotencyKey: string,
+  ): Promise<RemoteResult<ActedIncident>>;
 }
