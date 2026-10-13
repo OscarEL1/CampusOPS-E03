@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "week": 6,
+  "commitSha": "b923c163ce869d3829bb50a42f41e9e95a012a78",
+  "decision": "Se adopta una renovacion compartida (single-flight) que se activa antes de enviar cuando el token esta por expirar y tambien despues de una respuesta 401. Las peticiones concurrentes esperan una sola renovacion y cada una puede reintentarse como maximo una vez. Si el servidor rechaza la renovacion, la sesion persistida se elimina y el estado vuelve a anonymous; si no hay respuesta por una falla de red, se conserva la sesion autenticada y fallan las peticiones en espera, evitando cerrar una sesion que el servidor no ha invalidado. La generacion permite descartar resultados obsoletos y aumenta en uno solamente cuando la renovacion tiene exito.",
+  "alternatives": [
+    "Permitir que cada peticion que recibe 401 haga su propio refresh: reduce la coordinacion interna, pero varias respuestas simultaneas producirian renovaciones duplicadas, carreras al persistir tokens y resultados de generaciones obsoletas.",
+    "Renovar solamente con un temporizador y no reaccionar a respuestas 401: anticipa la expiracion conocida, pero no cubre revocaciones ni diferencias de reloj y deja que una credencial rechazada siga fallando hasta que venza el temporizador.",
+    "Cerrar la sesion ante cualquier fallo de refresh, incluida una caida de red: produce un estado simple, pero confunde indisponibilidad temporal con rechazo de credenciales, borra una sesion que puede seguir siendo valida y obliga al usuario a iniciar sesion de nuevo sin evidencia de revocacion."
+  ],
+  "tradeoff": "La politica elegida requiere mantener una promesa de renovacion compartida, solicitudes en espera, generaciones y un limite explicito de reintentos. Esa complejidad evita tormentas de refresh, bucles por 401 y escrituras tardias despues de logout. El rechazo confirmado termina de forma segura en anonymous y limpia el almacenamiento; una falla de red conserva la identidad autenticada, pero las operaciones en espera fallan y deben reintentarse cuando exista conectividad. Se acepta ese costo porque las 45 pruebas de sesion comprueban renovacion concurrente, expiracion, rechazo, ausencia de respuesta, logout y autorizacion de operaciones, mientras el diagrama documenta las mismas transiciones.",
+  "requirementIds": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05"],
+  "verification": [
+    {
+      "command": "npm run typecheck",
+      "result": "Codigo de salida 0; TypeScript termino sin errores.",
+      "evidence": "Los contratos de acciones, el gateway HTTP, el caso de uso, la composicion, la pantalla y las pruebas son compatibles con los tipos acumulados del proyecto."
+    },
+    {
+      "command": "npm run lint",
+      "result": "Codigo de salida 0; ESLint termino sin hallazgos.",
+      "evidence": "El codigo de autorizacion, transporte, interfaz, pruebas y documentacion modificados cumplen las reglas configuradas del repositorio."
+    },
+    {
+      "command": "npm run test:session",
+      "result": "Codigo de salida 0; 6 suites y 45 pruebas aprobadas.",
+      "evidence": "Pasaron login, expiracion, renovacion compartida frente a 401 concurrentes, limite de un reintento, rechazo y falla de red durante refresh, logout, denegacion local sin llamar al gateway, 403 del backend real y el flujo tecnico resuelve, coordinacion cierra y reabre."
+    },
+    {
+      "command": "npm run test:cloud",
+      "result": "Codigo de salida 0; 3 suites y 98 pruebas aprobadas.",
+      "evidence": "Los contratos remotos, fallos tipados y pruebas contra el backend continuaron pasando despues de ampliar IncidentGateway con acciones autenticadas."
+    },
+    {
+      "command": "npm run test:smoke",
+      "result": "Codigo de salida 0; 1 suite y 1 prueba aprobada.",
+      "evidence": "CampusOps siguio renderizando y resolvio el estado del backend despues de integrar controles de acciones en el detalle de incidencia."
+    }
+  ]
+}

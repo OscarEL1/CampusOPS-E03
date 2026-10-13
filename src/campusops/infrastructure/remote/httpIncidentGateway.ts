@@ -1,5 +1,8 @@
 import type {
+  ActedIncident,
   CreatedIncident,
+  IncidentAction,
+  IncidentActionInput,
   IncidentGateway,
   NewIncident,
   RemoteFailure,
@@ -51,7 +54,7 @@ export type HttpIncidentGatewayOptions = Readonly<{
 
 export const DEFAULT_TIMEOUT_MS = 8000;
 
-type Operation = 'list' | 'get' | 'create';
+type Operation = 'list' | 'get' | 'create' | 'act';
 
 type Exchange =
   | Readonly<{ ok: true; json: unknown }>
@@ -364,6 +367,45 @@ export function createHttpIncidentGateway(options: HttpIncidentGatewayOptions): 
       const created: CreatedIncident = { incident: parsed.value, duplicate: json.duplicate };
       const incidentId = parsed.value.kind === 'available' ? parsed.value.incident.id : parsed.value.summary.id;
       return record('create', startedAt, { ok: true, value: created }, { incidentId, duplicate: json.duplicate });
+    },
+
+    async act(
+      incidentId: string,
+      action: IncidentAction,
+      input: IncidentActionInput,
+      baseVersion: number,
+      idempotencyKey: string,
+    ) {
+      const startedAt = now();
+      // Only fields belonging to the selected action cross the trust boundary.
+      const body = JSON.stringify(
+        action === 'resolve'
+          ? { action, baseVersion, diagnosis: input.diagnosis }
+          : { action, baseVersion },
+      );
+      const response = await exchange(
+        'POST',
+        `/v1/incidents/${encodeURIComponent(incidentId)}/actions`,
+        body,
+        { 'Idempotency-Key': idempotencyKey },
+      );
+      if (!response.ok) {
+        return record('act', startedAt, failure(response.failure));
+      }
+      const { json } = response;
+      if (!isPlainObject(json) || typeof json.duplicate !== 'boolean') {
+        return record('act', startedAt, invalid('action_shape'));
+      }
+      const parsed = parseIncident(json.incident, 'action');
+      if (!parsed.ok) {
+        return record('act', startedAt, parsed);
+      }
+      const receivedId = parsed.value.kind === 'available' ? parsed.value.incident.id : parsed.value.summary.id;
+      if (receivedId !== incidentId) {
+        return record('act', startedAt, invalid('action_incident_id_mismatch'));
+      }
+      const acted: ActedIncident = { incident: parsed.value, duplicate: json.duplicate };
+      return record('act', startedAt, { ok: true, value: acted }, { incidentId, action, duplicate: json.duplicate });
     },
   };
 }

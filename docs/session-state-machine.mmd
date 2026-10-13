@@ -1,0 +1,22 @@
+stateDiagram-v2
+    [*] --> restoring: inicia la aplicacion
+
+    restoring --> anonymous: no hay sesion guardada o no puede leerse
+    restoring --> authenticated: sesion guardada valida
+
+    anonymous --> authenticated: login correcto
+
+    authenticated --> refreshing: token expirado antes de enviar
+    authenticated --> refreshing: respuesta 401
+    refreshing --> authenticated: renovacion correcta / generacion + 1
+    refreshing --> anonymous: servidor rechaza la renovacion / borrar sesion guardada
+    refreshing --> authenticated: sin respuesta de red / fallan las peticiones en espera
+
+    authenticated --> anonymous: logout / borrar sesion guardada
+    refreshing --> anonymous: logout / borrar sesion guardada
+
+    note right of refreshing
+        Una sola renovacion compartida (single-flight).
+        Cada peticion se reintenta como maximo una vez.
+        No hay bucle de renovacion.
+    end note

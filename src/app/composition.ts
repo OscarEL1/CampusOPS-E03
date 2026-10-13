@@ -1,4 +1,5 @@
 import { createIncidentAssignments, type IncidentAssignments } from '../campusops/application/incidentAssignments';
+import { createIncidentActions, type IncidentActions } from '../campusops/application/incidentActions';
 import { createIncidentQueries, type IncidentQueries } from '../campusops/application/incidentQueries';
 import { createSessionManager, type SessionManager } from '../campusops/application/sessionManager';
 import {
@@ -37,6 +38,7 @@ export type CampusOpsApp = Readonly<{
    * access policy, the backend still decides.
    */
   remoteIncidentsFor(actor: CampusActor): RemoteIncidentQueries;
+  incidentActionsFor(actor: CampusActor): IncidentActions;
 }>;
 
 export type CampusOpsAppOptions = Readonly<{
@@ -65,5 +67,6 @@ export function createCampusOpsApp(
     sessionStore,
     session,
     remoteIncidentsFor: (actor) => createRemoteIncidentQueries(gateway, actor),
+    incidentActionsFor: (actor) => createIncidentActions(gateway, actor),
   };
 }
