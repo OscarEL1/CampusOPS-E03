@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "week": 6,
-  "commitSha": "d63d4634dc2c4158cfa9730692248cf122085a6d",
-  "generatedAt": "2026-10-10T21:32:21.484467+00:00",
+  "commitSha": "81679d42c2a1e44e3c42178f15f574148d85c1fb",
+  "generatedAt": "2026-10-13T03:09:44.400559+00:00",
   "status": "pass",
   "checks": [
     {
@@ -103,6 +103,42 @@
       "evidence": "Falla declarada reproducida en el commit 803fb98: runRefresh dejo de comparar la epoca de la sesion, asi que un refresh que respondia despues del logout volvia a guardar los tokens renovados. npm run typecheck, npm run lint y la prueba publica de la semana 06 salieron 0; solo npm run test:session fallo, 1 de 41, mostrando la sesion de generacion 2 persistida despues del logout. Corregido en el commit c303492. Diagnostico en reports/week-06/failure-01-refresh-tras-logout.log.",
       "expected": "la falla se detecta y la correccion la elimina",
       "observed": "1 de 41 fallida en 803fb98; 41 de 41 en c303492"
+    },
+    {
+      "id": "autorizacion-cliente-niega-sin-peticion",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/incident-actions.test.ts",
+      "evidence": "Un tecnico que no tiene asignada la incidencia intenta resolverla: incidentActions devuelve forbidden antes de llamar al gateway.",
+      "expected": "forbidden y 0 llamadas al gateway",
+      "observed": "{ ok: false, failure: { kind: forbidden } } y gateway.act no invocado"
+    },
+    {
+      "id": "autorizacion-accion-permitida",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/incident-actions.test.ts",
+      "evidence": "Un tecnico asignado reenvia la accion con su baseVersion y su Idempotency-Key.",
+      "expected": "la accion llega al gateway con version y clave",
+      "observed": "gateway.act recibe incidentId, accion, baseVersion y la misma clave"
+    },
+    {
+      "id": "autorizacion-servidor-403-al-saltar-cliente",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/incident-actions-backend.test.ts",
+      "evidence": "Contra el backend real, reporter-1 llama a gateway.act('start') directamente, sin pasar por la politica del cliente: el servidor responde 403. Ocultar botones no concede ni quita permisos; el backend decide.",
+      "expected": "403 forbidden del backend",
+      "observed": "{ ok: false, failure: { kind: forbidden } } y POST /v1/incidents/campus-inc-001/actions con estado 403"
+    },
+    {
+      "id": "perfiles-flujo-tecnico-coordinacion",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/incident-actions-backend.test.ts",
+      "evidence": "Backend real con sesiones de technician-1 y coordinator-1: el tecnico inicia y resuelve con diagnostico; coordinacion cierra y reabre.",
+      "expected": "assigned -> in_progress -> resolved -> closed -> assigned",
+      "observed": "start -> in_progress v2; resolve -> resolved v3; close -> closed v4; reopen -> assigned v5"
     }
   ]
 }

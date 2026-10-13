@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 6,
-  "commitSha": "b923c163ce869d3829bb50a42f41e9e95a012a78",
+  "commitSha": "81679d42c2a1e44e3c42178f15f574148d85c1fb",
   "decision": "Se adopta una renovacion compartida (single-flight) que se activa antes de enviar cuando el token esta por expirar y tambien despues de una respuesta 401. Las peticiones concurrentes esperan una sola renovacion y cada una puede reintentarse como maximo una vez. Si el servidor rechaza la renovacion, la sesion persistida se elimina y el estado vuelve a anonymous; si no hay respuesta por una falla de red, se conserva la sesion autenticada y fallan las peticiones en espera, evitando cerrar una sesion que el servidor no ha invalidado. La generacion permite descartar resultados obsoletos y aumenta en uno solamente cuando la renovacion tiene exito.",
   "alternatives": [
     "Permitir que cada peticion que recibe 401 haga su propio refresh: reduce la coordinacion interna, pero varias respuestas simultaneas producirian renovaciones duplicadas, carreras al persistir tokens y resultados de generaciones obsoletas.",

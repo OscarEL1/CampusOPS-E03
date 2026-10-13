@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "week": 6,
+  "teamId": "Equipo-03",
+  "note": "El equipo esta integrado por dos personas. El profesor autorizo de forma explicita trabajar y entregar en equipo de dos para esta actividad. El contrato de evidencias exige exactamente tres registros en members, por lo que esa comprobacion de esquema falla de forma conocida y declarada; ocurre desde la semana 01. No se agrego un tercer integrante porque la guia de entrega prohibe identidades inventadas o compartidas. Los dos registros siguientes corresponden a personas reales con su identidad Git registrada.",
+  "members": [
+    {
+      "studentId": "a3523110665",
+      "commitShas": [
+        "dcc57c1eb7639e434f5663f944071b666c10d4c6",
+        "29ceecc7bcb5af97c109da344cce40aff87c0a2a",
+        "981ca2d280f383879b51daafa5d7f05c13da81e0",
+        "54b199cc4a3bf7bbfe45cd92aa4248fccde75958",
+        "b5692785e28f87346b43287067aa949d45a894b0",
+        "9fe1ec8c943e342cb03b5843a0a6ee0dbc8c6843",
+        "803fb981aba50cc5c4be7123784b548bfce54207",
+        "c303492ba47cc895df024685f0d548299e203727",
+        "d63d4634dc2c4158cfa9730692248cf122085a6d",
+        "9ceae60ffc456dd7f54fe60b83a496a1f5a4a4f7"
+      ],
+      "files": [
+        ".github/workflows/week-06-sesion-segura-feedback.yml",
+        "src/campusops/domain/sessionRefresh.ts",
+        "src/campusops/domain/session.ts",
+        "src/campusops/domain/sessionStore.ts",
+        "src/campusops/application/sessionManager.ts",
+        "src/campusops/infrastructure/remote/httpAuthApi.ts",
+        "src/campusops/infrastructure/remote/httpIncidentGateway.ts",
+        "src/campusops/infrastructure/secureSessionStore.ts",
+        "src/campusops/ui/LoginScreen.tsx",
+        "src/app/composition.ts",
+        "src/course-evaluation/index.ts",
+        "App.tsx",
+        "course-tests/session-refresh.test.ts",
+        "course-tests/session-manager.test.ts",
+        "course-tests/session-backend.test.ts",
+        "package.json",
+        "package-lock.json",
+        "reports/week-06/auth-tests.json",
+        "reports/week-06/concurrency.json",
+        "reports/week-06/failure-01-refresh-tras-logout.log"
+      ],
+      "tests": [
+        "npm run test:session",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run audit:ci",
+        "npm run backend:self-test",
+        "npm run test:cloud",
+        "npm run test:smoke",
+        "npm test -- --ci --runInBand course-tests/public/week-06.test.ts"
+      ],
+      "reviews": [
+        "Pull request #12 feat/alejandro-week06-roles: revise la politica de acciones, el caso de uso incidentActions, act() del gateway, el diagrama de estados y engineering.json, y ejecute sobre su rama typecheck, lint, audit:ci, test:session (45 de 45), test:cloud (98 de 98), smoke, security y negative. Confirme que el diagrama coincide con las transiciones de sessionManager.ts y que act() reutiliza exchange(), de modo que las acciones tambien comparten la renovacion y el limite de un reintento."
+      ],
+      "prediction": "Si varias solicitudes reciben 401 al mismo tiempo debe haber un solo refresh y un reintento por solicitud. Esperaba que un refresh que responde despues del logout pudiera volver a guardar tokens sin que lo detectaran el compilador, el linter ni la prueba publica de la semana 06, porque esa prueba solo comprueba el logout sin un refresh en curso.",
+      "command": "npm run test:session",
+      "observedResult": "45 pruebas aprobadas con codigo de salida 0 sobre el commit 81679d42c2a1e44e3c42178f15f574148d85c1fb, incluidas 6 de sesion contra el backend didactico real: tres 401 simultaneos producen 1 llamada a /v1/session/refresh y 6 peticiones de incidencias. La falla declarada se reprodujo en 803fb98: typecheck, lint y la prueba publica salieron 0, mientras test:session fallo 1 de 41 mostrando la sesion de generacion 2 persistida despues del logout. Corregido en c303492.",
+      "explanation": "Implemente la politica de renovacion como un reductor puro con generaciones de token: los 401 del token vigente comparten un refresh, un 401 de una generacion anterior se reintenta sin renovar, cada solicitud se reintenta una vez como maximo y los resultados obsoletos se ignoran. El gestor de sesion ejecuta lo que decide esa politica: login, restauracion, expiracion con reloj inyectable, refresh compartido, logout y descarte por epoca de un refresh tardio. Un refresh rechazado vuelve a anonimo y borra la sesion; uno sin respuesta conserva la sesion. Conecte coordinateRefresh y el cliente HTTP a la misma politica y actualice shell-quote por un advisory critico nuevo."
+    },
+    {
+      "studentId": "AlexD39",
+      "commitShas": [
+        "b923c163ce869d3829bb50a42f41e9e95a012a78",
+        "143e77dd3c05c256bf70f35995545d985f8173ae"
+      ],
+      "files": [
+        "src/campusops/domain/accessPolicy.ts",
+        "src/campusops/domain/incidentGateway.ts",
+        "src/campusops/application/incidentActions.ts",
+        "src/campusops/infrastructure/remote/httpIncidentGateway.ts",
+        "src/campusops/ui/IncidentDetailScreen.tsx",
+        "src/app/composition.ts",
+        "App.tsx",
+        "course-tests/incident-actions.test.ts",
+        "course-tests/incident-actions-backend.test.ts",
+        "docs/session-state-machine.mmd",
+        "evidence/week-06/engineering.json"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand course-tests/incident-actions.test.ts",
+        "npm test -- --ci --runInBand course-tests/incident-actions-backend.test.ts",
+        "npm run test:session",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run test:cloud",
+        "npm run test:smoke"
+      ],
+      "reviews": [],
+      "prediction": "Ocultar un boton no impide que un actor sin permiso llame a la operacion. Esperaba que la politica del cliente negara antes de enviar la solicitud y que, si se saltaba esa politica llamando directamente al gateway, el backend real respondiera 403.",
+      "command": "npm test -- --ci --runInBand course-tests/incident-actions-backend.test.ts",
+      "observedResult": "Codigo de salida 0. reporter-1 llamando a gateway.act('start') directamente recibe 403 forbidden del backend real. Con sesiones reales, technician-1 inicia (in_progress, version 2) y resuelve con diagnostico (resolved, version 3), y coordinator-1 cierra (closed, version 4) y reabre (assigned, version 5). En course-tests/incident-actions.test.ts un tecnico no asignado recibe forbidden sin que se llame al gateway.",
+      "explanation": "Implemente la autorizacion de operaciones por perfil: canResolveIncident permite iniciar y resolver solo al tecnico asignado y canCloseOrReopenIncident reserva cerrar y reabrir a coordinacion. El caso de uso incidentActions aplica la politica antes de cualquier efecto remoto y act() del gateway envia solo los campos de cada accion con su version base y su clave de idempotencia, reutilizando la sesion compartida. Agregue los botones por rol en el detalle, el diagrama de estados de la sesion alineado con sessionManager.ts y la decision de ingenieria sobre la politica de renovacion y la transicion segura cuando falla."
+    }
+  ]
+}
