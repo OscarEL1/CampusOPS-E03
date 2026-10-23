@@ -1,7 +1,9 @@
 import { createIncidentAssignments, type IncidentAssignments } from '../campusops/application/incidentAssignments';
 import { createIncidentActions, type IncidentActions } from '../campusops/application/incidentActions';
 import { createIncidentQueries, type IncidentQueries } from '../campusops/application/incidentQueries';
+import { createOfflineWork, type OfflineWork } from '../campusops/application/offlineWork';
 import { createSessionManager, type SessionManager } from '../campusops/application/sessionManager';
+import { createSyncEngine, type SyncEngine } from '../campusops/application/syncEngine';
 import {
   createRemoteIncidentQueries,
   type RemoteIncidentQueries,
@@ -10,6 +12,10 @@ import type { CampusActor } from '../campusops/domain/accessPolicy';
 import type { AuthApi, Clock } from '../campusops/domain/session';
 import type { SessionStore } from '../campusops/domain/sessionStore';
 import { InMemoryIncidentRepository } from '../campusops/infrastructure/inMemoryIncidentRepository';
+import { openExpoSqliteDatabase } from '../campusops/infrastructure/local/expoSqliteDatabase';
+import type { SchemaResult } from '../campusops/infrastructure/local/localSchema';
+import type { SqlDatabase } from '../campusops/infrastructure/local/sqlDatabase';
+import { openOfflineStore } from '../campusops/infrastructure/local/sqliteOfflineStore';
 import { createHttpAuthApi } from '../campusops/infrastructure/remote/httpAuthApi';
 import { createHttpIncidentGateway, type FetchLike } from '../campusops/infrastructure/remote/httpIncidentGateway';
 import { SecureSessionStore } from '../campusops/infrastructure/secureSessionStore';
@@ -39,6 +45,18 @@ export type CampusOpsApp = Readonly<{
    */
   remoteIncidentsFor(actor: CampusActor): RemoteIncidentQueries;
   incidentActionsFor(actor: CampusActor): IncidentActions;
+  /**
+   * Local data (week 08): the persistent queue and the sync, on the device's
+   * SQLite file. Opened on first use, migrating the schema if needed; null when
+   * local storage cannot be opened, so the online app keeps working.
+   */
+  local(): LocalData | null;
+}>;
+
+export type LocalData = Readonly<{
+  schema: SchemaResult;
+  offlineWorkFor(actor: CampusActor): OfflineWork;
+  syncFor(actor: CampusActor): SyncEngine;
 }>;
 
 export type CampusOpsAppOptions = Readonly<{
@@ -46,6 +64,8 @@ export type CampusOpsAppOptions = Readonly<{
   fetchImpl?: FetchLike;
   clock?: Clock;
   baseUrl?: string;
+  /** Local SQLite database; the device file by default. Tests pass their own. */
+  database?: SqlDatabase;
 }>;
 
 export function createCampusOpsApp(
@@ -55,11 +75,13 @@ export function createCampusOpsApp(
   const repository = new InMemoryIncidentRepository();
   const baseUrl = options.baseUrl ?? courseBackendUrl();
   const fetchImpl = options.fetchImpl ?? platformFetch;
+  const clock = options.clock ?? systemClock;
   const session = createSessionManager({
     store: sessionStore,
     authApi: options.authApi ?? createHttpAuthApi({ baseUrl, fetchImpl }),
-    clock: options.clock ?? systemClock,
+    clock,
   });
+  let local: LocalData | null | undefined;
   const gateway = createHttpIncidentGateway({ baseUrl, session, fetchImpl });
   return {
     queries: createIncidentQueries(repository),
@@ -68,5 +90,22 @@ export function createCampusOpsApp(
     session,
     remoteIncidentsFor: (actor) => createRemoteIncidentQueries(gateway, actor),
     incidentActionsFor: (actor) => createIncidentActions(gateway, actor),
+    local() {
+      if (local === undefined) {
+        try {
+          const opened = openOfflineStore(options.database ?? openExpoSqliteDatabase());
+          local = {
+            schema: opened.schema,
+            offlineWorkFor: (actor) => createOfflineWork({ store: opened.store, actor, clock }),
+            syncFor: (actor) => createSyncEngine({ store: opened.store, gateway, actor, clock }),
+          };
+        } catch {
+          // A failed migration rolled back; the data is still in the previous
+          // schema and the next start tries again.
+          local = null;
+        }
+      }
+      return local;
+    },
   };
 }
