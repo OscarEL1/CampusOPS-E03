@@ -135,6 +135,24 @@ function parseIncident(json: unknown, context: string): RemoteResult<RemoteIncid
   return { ok: true, value: mapped.value };
 }
 
+/** Only the fields that belong to the selected action cross the trust boundary. */
+function actionBody(action: IncidentAction, input: IncidentActionInput, baseVersion: number): Record<string, unknown> {
+  switch (action) {
+    case 'resolve':
+      return { action, baseVersion, diagnosis: input.diagnosis };
+    case 'assign':
+      return { action, baseVersion, technicianId: input.technicianId };
+    case 'prioritize':
+      return { action, baseVersion, priority: input.priority };
+    case 'comment':
+      return { action, baseVersion, text: input.text };
+    case 'add_evidence':
+      return { action, baseVersion, evidenceId: input.evidenceId };
+    default:
+      return { action, baseVersion };
+  }
+}
+
 /** Module-wide, so two gateways sharing one session never reuse a request id. */
 let requestSequence = 0;
 
@@ -378,11 +396,7 @@ export function createHttpIncidentGateway(options: HttpIncidentGatewayOptions): 
     ) {
       const startedAt = now();
       // Only fields belonging to the selected action cross the trust boundary.
-      const body = JSON.stringify(
-        action === 'resolve'
-          ? { action, baseVersion, diagnosis: input.diagnosis }
-          : { action, baseVersion },
-      );
+      const body = JSON.stringify(actionBody(action, input, baseVersion));
       const response = await exchange(
         'POST',
         `/v1/incidents/${encodeURIComponent(incidentId)}/actions`,

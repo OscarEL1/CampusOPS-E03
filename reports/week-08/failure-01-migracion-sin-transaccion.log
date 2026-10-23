@@ -1,0 +1,85 @@
+## Falla declarada: migracion del esquema 1 al 2 sin una transaccion unica
+Cambio: migrateV1ToV2 ejecuta cada paso por separado (cada sentencia se confirma sola) en lugar de envolverlos en inTransaction.
+ src/campusops/infrastructure/local/localSchema.ts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+$ npm run typecheck
+  codigo de salida: 0
+
+$ npm run lint
+  codigo de salida: 0
+
+$ npm test -- --ci --runInBand course-tests/public/week-08.test.ts
+Tests:       3 passed, 3 total
+  codigo de salida: 0
+
+$ npm run test:sync
+  ● migration from schema 1 › a failure after tables_created rolls everything back, and the next start migrates cleanly
+    - Expected  - 2
+    + Received  + 4
+  ● migration from schema 1 › a failure after incidents_copied rolls everything back, and the next start migrates cleanly
+    - Expected  - 2
+    + Received  + 7
+  ● migration from schema 1 › a failure after operations_copied rolls everything back, and the next start migrates cleanly
+    - Expected  -  2
+    + Received  + 11
+  ● migration from schema 1 › a failure after legacy_removed rolls everything back, and the next start migrates cleanly
+    - Expected  - 12
+    + Received  + 11
+  ● migration from schema 1 › the app stopping in the middle of the migration leaves schema 1 intact on the next start
+    - Expected  -  2
+    + Received  + 11
+  ● migration from schema 1 › legacy data that cannot be migrated faithfully aborts the migration and stays in schema 1
+    - Expected  -  2
+    + Received  + 11
+Tests:       6 failed, 31 passed, 37 total
+  codigo de salida: 1
+
+## Estado tras una falla inyectada despues de operations_copied (codigo con la falla)
+    - Expected  -  2
+    + Received  + 11
+
+      Object {
+    -   "incidents": null,
+    +   "incidents": Array [
+    +     "campus-inc-001",
+    +     "campus-inc-002",
+    +   ],
+        "legacy": Array [
+          Object {
+            "key": "incidents",
+            "value": "[{\"id\":\"campus-inc-001\",\"title\":\"Incidencia de conectividad\",\"category\":\"connectivity\",\"description\":\"Sin conexión en laboratorio ficticio\",\"location\":\"Edificio de prueba A\",\"status\":\"assigned\",\"reporterId\":\"reporter-1\",\"assignedTechnicianId\":\"technician-1\",\"version\":2},{\"id\":\"campus-inc-002\",\"version\":1,\"status\":\"open\",\"title\":\"Incidencia de agua\",\"category\":\"water\",\"description\":\"Fuga ficticia en lavabo\",\"location\":\"Edificio de prueba B\",\"reporterId\":\"reporter-2\",\"assignedTechnicianId\":null}]",
+          },
+          Object {
+            "key": "outbox",
+            "value": "[{\"id\":\"legacy-op-0001\",\"incidentId\":\"campus-inc-001\",\"actorId\":\"technician-1\",\"action\":\"start\",\"body\":{},\"baseVersion\":2,\"createdAt\":1},{\"id\":\"legacy-op-0002\",\"incidentId\":\"campus-inc-001\",\"actorId\":\"technician-1\",\"action\":\"note\",\"body\":{\"text\":\"Cable de red ficticio dañado\"},\"baseVersion\":2,\"createdAt\":2},{\"id\":\"legacy-op-0003\",\"incidentId\":\"campus-inc-001\",\"actorId\":\"technician-1\",\"action\":\"photo\",\"body\":{\"photoRef\":\"photo-ref-legacy-0001\"},\"baseVersion\":2,\"createdAt\":3}]",
+          },
+        ],
+    -   "operations": null,
+    +   "operations": Array [
+    +     "legacy-op-0001",
+    +     "legacy-op-0002",
+    +     "legacy-op-0003",
+    +   ],
+        "tables": Array [
+    +     "incidents",
+          "kv_store",
+    +     "pending_operations",
+        ],
+        "userVersion": 1,
+      }
+
+Commit de la falla: c2e90bfe15f673d950e2e83b2b3e701870d29255
+Commit de la correccion: 776a8927a780a14d5a517d09ad3547d7dee4fafe
+
+## Resultado corregido
+$ npm run typecheck
+  codigo de salida: 0
+$ npm run lint
+  codigo de salida: 0
+$ npm run test:sync
+Tests:       37 passed, 37 total
+  codigo de salida: 0
+$ npm test -- --ci --runInBand course-tests/public/week-08.test.ts
+Tests:       3 passed, 3 total
+  codigo de salida: 0

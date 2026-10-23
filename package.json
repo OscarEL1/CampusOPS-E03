@@ -20,6 +20,7 @@
     "test:negative": "jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/negative-exposure.test.ts",
     "test:cloud": "jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/remote-contract.test.ts course-tests/remote-failures.test.ts course-tests/remote-backend.test.ts",
     "test:session": "jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/session-refresh.test.ts course-tests/session-manager.test.ts course-tests/session-backend.test.ts course-tests/incident-actions.test.ts course-tests/incident-actions-backend.test.ts course-tests/public/week-06.test.ts",
+    "test:sync": "jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand course-tests/sync-merge.test.ts course-tests/local-store.test.ts course-tests/sync-backend.test.ts course-tests/public/week-08.test.ts",
     "test:coverage:week11": "jest --no-watchman --cacheDirectory .jest-cache --ci --runInBand --coverage --coverageReporters=json-summary --coverageReporters=text --collectCoverageFrom=src/course-evaluation/index.ts --coverageThreshold='{\"global\":{\"branches\":60,\"functions\":65,\"lines\":70,\"statements\":70}}' course-tests/smoke.test.tsx course-tests/public/week-01.test.ts course-tests/public/week-02.test.ts course-tests/public/week-03.test.ts course-tests/public/week-04.test.ts course-tests/public/week-05.test.ts course-tests/public/week-06.test.ts course-tests/public/week-08.test.ts course-tests/public/week-09.test.ts course-tests/public/week-10.test.ts course-tests/public/week-11.test.ts",
     "audit:ci": "npm audit --omit=dev --audit-level=critical",
     "bundle:release": "expo export --platform android --output-dir dist/export",
@@ -30,6 +31,7 @@
   "dependencies": {
     "expo": "~57.0.9",
     "expo-secure-store": "~57.0.4",
+    "expo-sqlite": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
     "react-native": "0.86.2"

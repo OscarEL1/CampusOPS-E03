@@ -1,6 +1,8 @@
 import {
+  canAssignIncident,
   canCloseOrReopenIncident,
   canResolveIncident,
+  canViewIncident,
   type CampusActor,
 } from '../domain/accessPolicy';
 import type { Incident } from '../domain/incident';
@@ -22,15 +24,32 @@ export type IncidentActions = Readonly<{
   ): Promise<RemoteResult<ActedIncident>>;
 }>;
 
+function isAllowed(actor: CampusActor, incident: Incident, action: IncidentAction): boolean {
+  switch (action) {
+    case 'start':
+    case 'resolve':
+      return canResolveIncident(actor, incident);
+    case 'close':
+    case 'reopen':
+      return canCloseOrReopenIncident(actor);
+    case 'assign':
+    case 'prioritize':
+      return canAssignIncident(actor);
+    case 'comment':
+    case 'add_evidence':
+      return canViewIncident(actor, incident);
+    default: {
+      const unreachable: never = action;
+      return unreachable;
+    }
+  }
+}
+
 /** Applies client-side authorization before any remote side effect. */
 export function createIncidentActions(gateway: IncidentGateway, actor: CampusActor): IncidentActions {
   return {
     act(incident, action, input, baseVersion, idempotencyKey) {
-      const allowed =
-        action === 'start' || action === 'resolve'
-          ? canResolveIncident(actor, incident)
-          : canCloseOrReopenIncident(actor);
-      if (!allowed) {
+      if (!isAllowed(actor, incident, action)) {
         return Promise.resolve({ ok: false, failure: { kind: 'forbidden' } });
       }
       return gateway.act(incident.id, action, input, baseVersion, idempotencyKey);
