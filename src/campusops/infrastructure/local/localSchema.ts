@@ -156,7 +156,7 @@ function legacyContent(item: Record<string, unknown>): Readonly<{ action: string
 function migrateV1ToV2(db: SqlDatabase, options: SchemaOptions): SchemaResult {
   const step = options.onMigrationStep ?? (() => undefined);
   const now = options.now ?? (() => Date.now());
-  return (() => {
+  return inTransaction(db, () => {
     db.exec(SCHEMA_V2_DDL);
     step('tables_created');
 
@@ -227,7 +227,7 @@ function migrateV1ToV2(db: SqlDatabase, options: SchemaOptions): SchemaResult {
 
     db.exec(`PRAGMA user_version = ${String(SCHEMA_VERSION)}`);
     return { from: LEGACY_SCHEMA_VERSION, to: SCHEMA_VERSION, migratedIncidents: incidents.length, migratedOperations: outbox.length };
-  })();
+  });
 }
 
 /** Brings the database to the current schema. Safe to call on every start. */
