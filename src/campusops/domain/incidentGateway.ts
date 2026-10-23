@@ -57,11 +57,27 @@ export type CreatedIncident = Readonly<{
   duplicate: boolean;
 }>;
 
-export type IncidentAction = 'start' | 'resolve' | 'close' | 'reopen';
+export type IncidentAction =
+  | 'start'
+  | 'resolve'
+  | 'close'
+  | 'reopen'
+  | 'assign'
+  | 'prioritize'
+  | 'comment'
+  | 'add_evidence';
 
-/** Optional fields accepted by an incident action. Only resolve uses diagnosis. */
+/**
+ * Optional fields accepted by an incident action. Each action sends only its
+ * own: resolve -> diagnosis, assign -> technicianId, prioritize -> priority,
+ * comment -> text, add_evidence -> evidenceId (a pending photo reference).
+ */
 export type IncidentActionInput = Readonly<{
   diagnosis?: string;
+  technicianId?: string;
+  priority?: 'low' | 'medium' | 'high';
+  text?: string;
+  evidenceId?: string;
 }>;
 
 /** The server representation after applying or replaying an action. */
