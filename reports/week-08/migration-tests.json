@@ -1,0 +1,310 @@
+{
+  "schemaVersion": 1,
+  "week": 8,
+  "commitSha": "e0f8759d4433db239295679b6109b759f4649886",
+  "generatedAt": "2026-10-23T22:32:46.610172+00:00",
+  "status": "pass",
+  "checks": [
+    {
+      "id": "esquema-instalacion-nueva",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/local-store.test.ts",
+      "evidence": "Una base vacia (user_version 0) crea el esquema 2 en una sola transaccion; abrirla otra vez no migra nada.",
+      "expected": "user_version 2 con incidents y pending_operations",
+      "observed": "{ from: 0, to: 2 } y luego { from: 2, to: 2 }; tablas [incidents, pending_operations]"
+    },
+    {
+      "id": "esquema-mas-nuevo-intacto",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/local-store.test.ts",
+      "evidence": "Una base con user_version 3 (mas nueva que esta version de la app) no se toca.",
+      "expected": "UnsupportedSchemaError y la base sin cambios",
+      "observed": "UnsupportedSchemaError; user_version 3 y tablas [future_table]"
+    },
+    {
+      "id": "migracion-valida-1-a-2",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/local-store.test.ts",
+      "evidence": "Datos del esquema 1 (kv_store con documentos JSON y acciones con nombres anteriores note/photo) migran al esquema 2.",
+      "expected": "incidencias y cola conservadas con la misma identidad",
+      "observed": "{ from: 1, to: 2, migratedIncidents: 2, migratedOperations: 3 }; operation_id legacy-op-0001..0003; note -> comment, photo -> add_evidence; kv_store eliminado",
+      "states": {
+        "antes": {
+          "userVersion": 1,
+          "tables": [
+            "kv_store"
+          ],
+          "incidents": null,
+          "operations": null,
+          "legacy": "incidents (2) y outbox (3) como documentos JSON"
+        },
+        "despues": {
+          "userVersion": 2,
+          "tables": [
+            "incidents",
+            "pending_operations"
+          ],
+          "legacy": null,
+          "incidents": [
+            "campus-inc-001",
+            "campus-inc-002"
+          ],
+          "operations": [
+            "legacy-op-0001",
+            "legacy-op-0002",
+            "legacy-op-0003"
+          ]
+        }
+      }
+    },
+    {
+      "id": "migracion-fallida-rollback",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/local-store.test.ts",
+      "evidence": "Falla inyectada dentro de la transaccion despues de cada paso: tables_created, incidents_copied, operations_copied y legacy_removed (4 casos).",
+      "expected": "tras la falla la base es identica a la de antes; al reintentar migra completa sin duplicados",
+      "observed": "en los 4 casos describeState(db) despues de la falla es igual al estado anterior (user_version 1, solo kv_store, documentos JSON identicos); el siguiente inicio deja user_version 2 con 3 operaciones",
+      "states": {
+        "antes": {
+          "userVersion": 1,
+          "tables": [
+            "kv_store"
+          ],
+          "incidents": null,
+          "operations": null,
+          "legacy": "incidents (2) y outbox (3) como documentos JSON"
+        },
+        "despuesDeLaFalla": {
+          "userVersion": 1,
+          "tables": [
+            "kv_store"
+          ],
+          "incidents": null,
+          "operations": null,
+          "legacy": "incidents (2) y outbox (3) como documentos JSON"
+        },
+        "despuesDeRecuperar": {
+          "userVersion": 2,
+          "tables": [
+            "incidents",
+            "pending_operations"
+          ],
+          "legacy": null,
+          "incidents": [
+            "campus-inc-001",
+            "campus-inc-002"
+          ],
+          "operations": [
+            "legacy-op-0001",
+            "legacy-op-0002",
+            "legacy-op-0003"
+          ]
+        }
+      }
+    },
+    {
+      "id": "migracion-interrumpida-app-cerrada",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/local-store.test.ts",
+      "evidence": "La conexion se cierra a mitad de la migracion (despues de operations_copied) sin COMMIT, como si la app se detuviera; luego se abre el mismo archivo.",
+      "expected": "al reabrir, el esquema 1 intacto y la migracion completa en el siguiente inicio",
+      "observed": "estado al reabrir igual al anterior; prepareLocalSchema -> { from: 1, to: 2, migratedOperations: 3 }",
+      "states": {
+        "antes": {
+          "userVersion": 1,
+          "tables": [
+            "kv_store"
+          ],
+          "incidents": null,
+          "operations": null,
+          "legacy": "incidents (2) y outbox (3) como documentos JSON"
+        },
+        "alReabrir": {
+          "userVersion": 1,
+          "tables": [
+            "kv_store"
+          ],
+          "incidents": null,
+          "operations": null,
+          "legacy": "incidents (2) y outbox (3) como documentos JSON"
+        },
+        "despuesDeRecuperar": {
+          "userVersion": 2,
+          "tables": [
+            "incidents",
+            "pending_operations"
+          ],
+          "legacy": null,
+          "incidents": [
+            "campus-inc-001",
+            "campus-inc-002"
+          ],
+          "operations": [
+            "legacy-op-0001",
+            "legacy-op-0002",
+            "legacy-op-0003"
+          ]
+        }
+      }
+    },
+    {
+      "id": "migracion-datos-no-migrables",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/local-store.test.ts",
+      "evidence": "Una operacion del esquema 1 apunta a una incidencia no guardada, u otra usa una accion desconocida.",
+      "expected": "LegacyDataError y los datos siguen en el esquema 1",
+      "observed": "LegacyDataError en ambos; describeState sin cambios, user_version 1"
+    },
+    {
+      "id": "migracion-base-desconocida",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/local-store.test.ts",
+      "evidence": "Una operacion del esquema 1 con baseVersion distinta de la copia guardada.",
+      "expected": "base vacia que obliga a revisar en lugar de adivinar",
+      "observed": "baseVersion 1, baseFields {}"
+    },
+    {
+      "id": "reinicio-conserva-cola",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/local-store.test.ts && npm test -- --ci --runInBand course-tests/sync-backend.test.ts",
+      "evidence": "technician-1 inicia atencion, agrega una nota y una referencia de foto sin conexion; se cierra la conexion a la base y se abre el mismo archivo. En el backend real tambien con la sesion persistida.",
+      "expected": "mismos operationId, contenido, autor, version base y orden; la sesion sigue sus reglas",
+      "observed": "pending() identico antes y despues; 3 operaciones con baseVersion 2 y la misma base; schema { from: 2, to: 2 }; la sesion se restaura sin nuevo login"
+    },
+    {
+      "id": "reinicio-otro-actor-no-envia",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/sync-backend.test.ts",
+      "evidence": "technician-2 inicia sesion en el mismo dispositivo y sincroniza antes que technician-1.",
+      "expected": "no envia operaciones de otro autor",
+      "observed": "{ confirmed: [], pending: [] } y 0 llamadas a /actions"
+    },
+    {
+      "id": "referencia-foto-no-es-subida",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/local-store.test.ts && npm test -- --ci --runInBand course-tests/sync-backend.test.ts",
+      "evidence": "Una referencia de fotografia se guarda como add_evidence con evidenceId sintetico.",
+      "expected": "identifica un recurso pendiente, no prueba que la imagen se subio",
+      "observed": "contenido { action: add_evidence, evidenceId: photo-ref-week08-0001 }; en el servidor solo aparece como referencia en evidence"
+    },
+    {
+      "id": "politica-de-perfiles-antes-de-encolar",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/local-store.test.ts",
+      "evidence": "technician-2 (no asignado) y reporter-1 intentan iniciar atencion; un id no guardado; una nota vacia.",
+      "expected": "nada se encola sin permiso",
+      "observed": "forbidden, forbidden, not_cached, invalid; cola vacia"
+    },
+    {
+      "id": "conflicto-reasignacion",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/sync-backend.test.ts",
+      "evidence": "Base comun version 2 asignada a technician-1. El tecnico inicia atencion sin conexion; coordinacion reasigna a technician-2 (version 3). Al reconectar el servidor responde 403 y el tecnico ya no ve la incidencia.",
+      "expected": "conflicto declarado, intencion local conservada, asignacion remota intacta",
+      "observed": "conflicts [op]; problem { kind: conflict, reason: assignment_changed, fields: [work] }; la operacion sigue en la cola con content { action: start } y baseVersion 2; servidor version 3, assigned, technician-2, sin historial de esa operacion"
+    },
+    {
+      "id": "conflicto-espera-decision",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/sync-backend.test.ts",
+      "evidence": "Se sincroniza otra vez sin decidir el conflicto.",
+      "expected": "no se reenvia",
+      "observed": "held [op]; las llamadas a /actions no aumentan"
+    },
+    {
+      "id": "conflicto-resuelto",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/sync-backend.test.ts",
+      "evidence": "Coordinacion devuelve la incidencia a technician-1 y el tecnico decide reintentar (retry).",
+      "expected": "se combina sobre la version nueva y se confirma una sola vez",
+      "observed": "rebased [op], confirmed [op]; servidor in_progress con technician-1 y una entrada de historial"
+    },
+    {
+      "id": "combinacion-cambios-independientes",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/sync-merge.test.ts && npm test -- --ci --runInBand course-tests/sync-backend.test.ts",
+      "evidence": "Nota sin conexion del tecnico y prioridad alta de coordinacion desde la misma version base.",
+      "expected": "ambos cambios combinados sin mutar entradas",
+      "observed": "409 version_conflict -> resolveSync merged -> rebase y confirmacion; servidor version 4 con priority high y la nota del tecnico"
+    },
+    {
+      "id": "resolveSync-reglas",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/sync-merge.test.ts && npm test -- --ci --runInBand course-tests/public/week-08.test.ts",
+      "evidence": "Conflicto en work, combinacion independiente, varios campos en orden de nombre, mismo cambio en ambos lados, orden de llaves irrelevante, entradas congeladas.",
+      "expected": "merged o conflict segun el contenido JSON",
+      "observed": "conflict [work]; conflict [work, zone]; merged en los demas; entradas sin cambios y resultado sin alias"
+    },
+    {
+      "id": "deduplicacion",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/sync-merge.test.ts && npm test -- --ci --runInBand course-tests/local-store.test.ts && npm test -- --ci --runInBand course-tests/public/week-08.test.ts",
+      "evidence": "Operaciones repetidas por operationId en la lista y en la tabla (UNIQUE).",
+      "expected": "se conserva la primera sin mutar",
+      "observed": "deduplicateOperations conserva la primera; enqueue repetido -> duplicate y el contenido original"
+    },
+    {
+      "id": "operacion-repetida-un-solo-efecto",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/sync-backend.test.ts",
+      "evidence": "Variante timeout_after_commit: el servidor guarda el inicio y el cliente corta a los 400 ms. Despues se envia la misma operacion con la misma identidad y contenido.",
+      "expected": "la primera vez queda pendiente; la segunda se confirma como duplicada; un solo efecto",
+      "observed": "stoppedBy timeout, attempts 1, estado pending; luego replayed [op] y confirmed [op]; servidor version 3 y exactamente 1 entrada de historial con ese operationId"
+    },
+    {
+      "id": "no-confirmado-permanece",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/sync-backend.test.ts",
+      "evidence": "Variante server_error (500) y luego sin conexion.",
+      "expected": "la operacion no se descarta",
+      "observed": "stoppedBy server_error y luego network; attempts 2, estado pending; servidor sin la nota; al reconectar se confirma"
+    },
+    {
+      "id": "falla-01-migracion-sin-transaccion",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "git show c2e90bfe15f673d950e2e83b2b3e701870d29255 -- src/campusops/infrastructure/local/localSchema.ts",
+      "evidence": "Falla declarada reproducida en el commit c2e90bf: migrateV1ToV2 ejecutaba cada paso por separado. npm run typecheck, npm run lint y la prueba publica de la semana 08 salieron 0; solo npm run test:sync fallo, 6 de 37. Tras una falla despues de operations_copied quedaba user_version 1 con kv_store mas incidents y pending_operations ya poblados: el esquema 1 y el 2 mezclados. Corregido en el commit 776a892. Diagnostico en reports/week-08/failure-01-migracion-sin-transaccion.log.",
+      "expected": "la falla se detecta y la correccion la elimina",
+      "observed": "6 de 37 fallidas en c2e90bf; 37 de 37 en 776a892",
+      "states": {
+        "despuesDeLaFallaConElDefecto": {
+          "userVersion": 1,
+          "tables": [
+            "incidents",
+            "kv_store",
+            "pending_operations"
+          ],
+          "incidents": [
+            "campus-inc-001",
+            "campus-inc-002"
+          ],
+          "operations": [
+            "legacy-op-0001",
+            "legacy-op-0002",
+            "legacy-op-0003"
+          ]
+        }
+      }
+    }
+  ]
+}
