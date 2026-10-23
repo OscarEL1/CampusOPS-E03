@@ -207,6 +207,9 @@ test('offline work survives closing the app and is sent once, in order, when the
 
   // Reopen the app: same database file, same persisted session, still offline.
   const second = await openDevice(TECHNICIAN, { dbPath, network, sessionStore });
+  // The persisted session is restored by its own rules: no new login was needed.
+  expect(second.calls.filter((call) => call.path === '/v1/session/login')).toHaveLength(0);
+  expect(second.app.session.snapshot()).toEqual({ status: 'authenticated', actor: TECHNICIAN });
   expect(second.local.schema).toEqual({ from: 2, to: 2, migratedIncidents: 0, migratedOperations: 0 });
   expect(second.work.pending()).toEqual(beforeRestart);
   expect(second.work.pending().map((operation) => [operation.operationId, operation.attempts])).toEqual([
