@@ -9,6 +9,10 @@ import type {
 import type { IncidentLocation } from '../campusops/contracts';
 import { redactSensitive } from '../campusops/domain/logRedaction';
 import { initialRefreshState, reduceSessionEvent } from '../campusops/domain/sessionRefresh';
+import {
+  deduplicateOperations as deduplicateQueuedOperations,
+  resolveSync as resolveIncidentSync,
+} from '../campusops/domain/syncMerge';
 import { parseRemoteResource as parseRemoteEnvelope } from '../campusops/infrastructure/remote/remoteResource';
 
 function pending(name: string): never {
@@ -78,18 +82,22 @@ export function coordinateRefresh(events: readonly AuthEvent[]): Readonly<{
   };
 }
 
+/**
+ * Week 08 adapters. Both call the reconciliation rules the sync engine uses on
+ * the persistent queue, so the evaluated behaviour and the app's are one path.
+ */
 export function resolveSync(
-  _base: SyncRecord,
-  _local: SyncRecord,
-  _remote: SyncRecord,
+  base: SyncRecord,
+  local: SyncRecord,
+  remote: SyncRecord,
 ): Readonly<{ kind: 'merged'; fields: JsonObject } | { kind: 'conflict'; fields: readonly string[] }> {
-  return pending('resolveSync');
+  return resolveIncidentSync(base, local, remote);
 }
 
 export function deduplicateOperations<T extends Readonly<{ operationId: string }>>(
-  _operations: readonly T[],
+  operations: readonly T[],
 ): readonly T[] {
-  return pending('deduplicateOperations');
+  return deduplicateQueuedOperations(operations);
 }
 
 export function planRetry(_input: Readonly<{
