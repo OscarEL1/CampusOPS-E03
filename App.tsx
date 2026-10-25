@@ -62,6 +62,12 @@ function SignedInHome({ app, actor }: Readonly<{ app: CampusOpsApp; actor: Campu
   // (refreshing -> authenticated) does not reload the list.
   const { id: actorId, role } = actor;
   const remoteIncidents = useMemo(() => app.remoteIncidentsFor({ id: actorId, role }), [app, actorId, role]);
+  const local = useMemo(() => app.local(), [app]);
+  const offlineWork = useMemo(
+    () => local?.offlineWorkFor({ id: actorId, role }) ?? null,
+    [actorId, local, role],
+  );
+  const sync = useMemo(() => local?.syncFor({ id: actorId, role }) ?? null, [actorId, local, role]);
   const [list, setList] = useState<ListState>({ phase: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
@@ -108,6 +114,11 @@ function SignedInHome({ app, actor }: Readonly<{ app: CampusOpsApp; actor: Campu
           <Text style={styles.retryText}>Cerrar sesión</Text>
         </Pressable>
       </View>
+      {local === null ? (
+        <View accessibilityRole="alert" style={styles.card} testID="local-storage-unavailable">
+          <Text>No se pudo abrir el almacenamiento local. Puedes continuar usando CampusOps en línea.</Text>
+        </View>
+      ) : null}
       {!creatingIncident && selectedIncidentId === null && actor.role === 'reporter' ? (
         <Pressable
           accessibilityRole="button"
@@ -143,6 +154,7 @@ function SignedInHome({ app, actor }: Readonly<{ app: CampusOpsApp; actor: Campu
           act={app.incidentActionsFor(actor).act}
           actor={actor}
           incident={selectedIncident.incident}
+          offlineWork={offlineWork}
           onBack={() => setSelectedIncidentId(null)}
           onChanged={(changed) => {
             setList((current) =>
@@ -156,6 +168,7 @@ function SignedInHome({ app, actor }: Readonly<{ app: CampusOpsApp; actor: Campu
                 : current,
             );
           }}
+          sync={sync}
           version={selectedIncident.version}
         />
       ) : null}
