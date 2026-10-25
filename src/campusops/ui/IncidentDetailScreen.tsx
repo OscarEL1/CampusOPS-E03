@@ -245,7 +245,7 @@ export function IncidentDetailScreen({
           />
         ) : null}
       </View>
-      {actionState.phase === 'saving' ? <Text testID="incident-action-saving">Guardandoâ€¦</Text> : null}
+      {actionState.phase === 'saving' ? <Text testID="incident-action-saving">Guardando…</Text> : null}
       {actionState.phase === 'failed' ? <Text testID="incident-action-error">{actionState.message}</Text> : null}
       {actionState.phase === 'saved' ? <Text testID="incident-action-success">{actionState.message}</Text> : null}
       {technicianAllowed && offlineWork !== null && sync !== null ? (
