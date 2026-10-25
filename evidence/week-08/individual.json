@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "week": 8,
+  "teamId": "Equipo-03",
+  "note": "El equipo esta integrado por dos personas. El profesor autorizo de forma explicita trabajar y entregar en equipo de dos para esta actividad. El contrato de evidencias exige exactamente tres registros en members, por lo que esa comprobacion de esquema falla de forma conocida y declarada; ocurre desde la semana 01. No se agrego un tercer integrante porque la guia de entrega prohibe identidades inventadas o compartidas. Los dos registros siguientes corresponden a personas reales con su identidad Git registrada.",
+  "members": [
+    {
+      "studentId": "a3523110665",
+      "commitShas": [
+        "92adc4097f823f80316edd13f7f5ab9d38374f8e",
+        "d9c285895be786ebc89585a441955f27c3ba2693",
+        "4f50bd87de8e72dcdce393b1cea9e2bed88ec14e",
+        "99b08a60cc63dd957be91c035253e080566ede72",
+        "10fbd55a2e7b3376ee20cc1c839368bd809cdb4a",
+        "0ee6b49d1014b8e1a38f48cd566077677027e46b",
+        "473bca400e715300261bb7b298dd63e3ac3097e4",
+        "c2e90bfe15f673d950e2e83b2b3e701870d29255",
+        "776a8927a780a14d5a517d09ad3547d7dee4fafe",
+        "e0f8759d4433db239295679b6109b759f4649886",
+        "8914422f0921386aa9cb04ed16911af42880e830",
+        "b42acd1a05c2a6206cefb3b8a15f9f62d69013a5",
+        "9af583c1888f97cf7bc1db8b14dd4c2b6cd2bee0",
+        "2b563880c47a6783648f0084f17ec03cd57850a6",
+        "5eb10868022efd76fa0fcb560855717d6353b9ec"
+      ],
+      "files": [
+        ".github/workflows/week-08-persistencia-sincronizacion-feedback.yml",
+        "src/campusops/domain/syncMerge.ts",
+        "src/campusops/domain/offlineQueue.ts",
+        "src/campusops/infrastructure/local/sqlDatabase.ts",
+        "src/campusops/infrastructure/local/localSchema.ts",
+        "src/campusops/infrastructure/local/sqliteOfflineStore.ts",
+        "src/campusops/infrastructure/local/expoSqliteDatabase.ts",
+        "src/campusops/application/offlineWork.ts",
+        "src/campusops/application/syncEngine.ts",
+        "src/campusops/application/incidentActions.ts",
+        "src/campusops/domain/incidentGateway.ts",
+        "src/campusops/infrastructure/remote/httpIncidentGateway.ts",
+        "src/campusops/ui/PendingChangesPanel.tsx",
+        "src/campusops/ui/offlineOperationText.ts",
+        "src/app/composition.ts",
+        "src/course-evaluation/index.ts",
+        "course-tests/support/nodeSqliteDatabase.ts",
+        "course-tests/sync-merge.test.ts",
+        "course-tests/local-store.test.ts",
+        "course-tests/sync-backend.test.ts",
+        "course-tests/pending-changes-panel.test.tsx",
+        "package.json",
+        "package-lock.json",
+        "app.json",
+        "reports/week-08/migration-tests.json",
+        "reports/week-08/failure-01-migracion-sin-transaccion.log"
+      ],
+      "tests": [
+        "npm run test:sync",
+        "npm test -- --ci --runInBand course-tests/local-store.test.ts",
+        "npm test -- --ci --runInBand course-tests/sync-backend.test.ts",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run audit:ci",
+        "npm run backend:self-test",
+        "npm run test:session",
+        "npm run test:cloud",
+        "npm test -- --ci --runInBand course-tests/public/week-08.test.ts"
+      ],
+      "reviews": [
+        "Rama feat/alejandro-week08-offline-ui, integrada en el pull request #14: revise la interfaz de trabajo sin conexion, data-model.md, sync-policy.md y engineering.json, y ejecute sobre su rama typecheck, lint, audit:ci, test:sync (37 de 37), test:session (45 de 45), test:cloud (98 de 98) y su prueba de pantalla. Encontre tres detalles y los corregi en la misma rama: el texto Guardando de la semana 06 guardado con doble codificacion (b42acd1), que su prueba de pantalla no corria en ningun script del CI (2b56388) y que el panel de conflicto solo se alcanzaba desde el detalle, al que no se llega sin conexion ni despues de una reasignacion; agregue el panel de cambios pendientes en la pantalla principal (9af583c)."
+      ],
+      "prediction": "Una migracion hecha paso por paso deja el esquema 1 y el 2 mezclados si falla a la mitad, y el siguiente inicio choca con las tablas ya creadas. Esperaba que ni el compilador, ni el linter, ni la prueba publica de la semana 08 lo detectaran, porque esa prueba solo cubre resolveSync y deduplicateOperations como funciones puras.",
+      "command": "npm run test:sync",
+      "observedResult": "43 pruebas aprobadas con codigo de salida 0 sobre el commit 845da173ad630e7d2e7c1028a3f7a8287d414f7c, incluidas 16 sobre un SQLite real y 5 contra el backend didactico real. La falla declarada se reprodujo en c2e90bf: typecheck, lint y la prueba publica salieron 0, mientras test:sync fallo 6 de 37; tras una falla despues de operations_copied quedaba user_version 1 con kv_store, incidents y pending_operations ya poblados. Corregido en 776a892.",
+      "explanation": "Implemente la persistencia local en SQLite con el mismo SQL sobre expo-sqlite en la app y node:sqlite en las pruebas, la migracion del esquema 1 (documentos JSON en kv_store) al 2 en una sola transaccion con rollback y recuperacion en el siguiente inicio, y la cola persistente con operationId estable, autor, contenido y version y campos base. El motor de sincronizacion retira solo lo confirmado, reenvia con la misma identidad, combina con resolveSync los cambios independientes tras un 409 y declara conflicto en work ante una reasignacion sin tocar la asignacion remota. Conecte resolveSync y deduplicateOperations a esa misma logica y agregue el panel de cambios pendientes de la pantalla principal."
+    },
+    {
+      "studentId": "AlexD39",
+      "commitShas": [
+        "73844c3216ca90009054798344a906c98c89f98d",
+        "efaffffcad69892c4f331f31fb5cb5e59715eb92"
+      ],
+      "files": [
+        "src/campusops/ui/IncidentDetailScreen.tsx",
+        "App.tsx",
+        "course-tests/offline-work-screen.test.tsx",
+        "docs/data-model.md",
+        "docs/sync-policy.md",
+        "evidence/week-08/engineering.json"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand course-tests/offline-work-screen.test.tsx",
+        "npm run test:sync",
+        "npm run test:session",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run test:smoke"
+      ],
+      "reviews": [],
+      "prediction": "Un conflicto de reasignacion no debe resolverse solo: la interfaz tiene que informarlo y esperar una decision explicita del tecnico, y un tecnico no asignado no debe poder iniciar atencion sin conexion aunque vea la incidencia.",
+      "command": "npm test -- --ci --runInBand course-tests/offline-work-screen.test.tsx",
+      "observedResult": "3 pruebas aprobadas con codigo de salida 0. Con una operacion en conflicto por reasignacion la pantalla muestra que la incidencia fue reasignada y que el cambio no se envio, y discard solo se llama al pulsar Descartar mi cambio. Para technician-2 no aparece Iniciar sin conexion ni el panel. Una referencia de foto se muestra como pendiente de subir.",
+      "explanation": "Implemente la interfaz de trabajo sin conexion en el detalle de la incidencia: iniciar atencion, agregar notas y referencias de foto que se encolan, la lista de cambios pendientes con su estado, el boton de sincronizar y, ante un conflicto, la explicacion con Reintentar y Descartar mi cambio como decisiones explicitas. La integre en App.tsx con un aviso cuando el almacenamiento local no abre. Escribi docs/data-model.md con las entidades, la relacion, la version de esquema y la migracion, docs/sync-policy.md con las reglas ligadas a sus pruebas, y la decision de ingenieria sobre la politica de conflicto e idempotencia."
+    }
+  ]
+}

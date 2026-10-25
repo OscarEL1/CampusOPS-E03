@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 8,
-  "commitSha": "73844c3216ca90009054798344a906c98c89f98d",
+  "commitSha": "845da173ad630e7d2e7c1028a3f7a8287d414f7c",
   "decision": "CampusOps conserva en la cola la intención local, su versión base y su operationId, mientras mantiene intacta la copia remota confirmada. Los cambios independientes se combinan al rebasar la operación sobre la versión nueva; en cambio, assignedTechnicianId y status forman el campo compuesto work, por lo que un inicio local y una reasignación remota requieren resolución explícita. Un conflicto no impone la asignación antigua ni elimina el cambio local: la interfaz informa que no se envió y permite reintentar o descartarlo únicamente por decisión del técnico. Cada reintento reutiliza operationId como Idempotency-Key y la operación sale de la cola sólo después de una confirmación del servidor, incluida una respuesta duplicate.",
   "alternatives": [
     "Permitir que gane el último que escribe y sobrescribir la asignación remota con el inicio local. Simplificaría la reconciliación, pero recuperaría una responsabilidad obsoleta y podría permitir que el técnico anterior modificara una incidencia ya reasignada.",
@@ -23,8 +23,8 @@
     },
     {
       "command": "npm run test:sync",
-      "result": "Código de salida 0; 4 suites y 37 pruebas aprobadas.",
-      "evidence": "Pasaron migración y rollback, persistencia de la cola, autorización antes de encolar, conflicto por reasignación, combinación de cambios independientes, reintento idempotente y permanencia de operaciones no confirmadas."
+      "result": "Código de salida 0; 6 suites y 43 pruebas aprobadas.",
+      "evidence": "Pasaron migración y rollback, persistencia de la cola, autorización antes de encolar, conflicto por reasignación, combinación de cambios independientes, reintento idempotente y permanencia de operaciones no confirmadas, además de las pruebas de la pantalla de detalle y del panel de cambios pendientes de la pantalla principal."
     },
     {
       "command": "npm run test:session",
