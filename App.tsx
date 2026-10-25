@@ -11,6 +11,7 @@ import { CreateIncidentScreen } from './src/campusops/ui/CreateIncidentScreen';
 import { IncidentDetailScreen } from './src/campusops/ui/IncidentDetailScreen';
 import { IncidentListScreen } from './src/campusops/ui/IncidentListScreen';
 import { LoginScreen } from './src/campusops/ui/LoginScreen';
+import { PendingChangesPanel } from './src/campusops/ui/PendingChangesPanel';
 import { describeRemoteFailure } from './src/campusops/ui/remoteFailureMessage';
 
 type ListState =
@@ -174,6 +175,18 @@ function SignedInHome({ app, actor }: Readonly<{ app: CampusOpsApp; actor: Campu
       ) : null}
       {!creatingIncident && list.phase === 'ready' && !selectedIncident ? (
         <IncidentListScreen items={list.items} onSelect={setSelectedIncidentId} />
+      ) : null}
+      {!creatingIncident && !selectedIncident && offlineWork !== null && sync !== null ? (
+        // Shown whatever the online list did: offline after a restart, or with
+        // the incident reassigned away, the queued work is still visible.
+        <PendingChangesPanel
+          offlineWork={offlineWork}
+          onSynced={() => {
+            setList({ phase: 'loading' });
+            setAttempt((value) => value + 1);
+          }}
+          sync={sync}
+        />
       ) : null}
     </>
   );

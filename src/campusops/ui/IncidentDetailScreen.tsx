@@ -12,7 +12,8 @@ import {
 } from '../domain/accessPolicy';
 import type { Incident } from '../domain/incident';
 import type { IncidentAction, RemoteIncident } from '../domain/incidentGateway';
-import type { LocalIncidentView, PendingOperation } from '../domain/offlineQueue';
+import type { LocalIncidentView } from '../domain/offlineQueue';
+import { operationDescription, operationState, problemExplanation, syncSummary } from './offlineOperationText';
 import { describeRemoteFailure } from './remoteFailureMessage';
 
 type IncidentDetailScreenProps = Readonly<{
@@ -41,35 +42,6 @@ function offlineFailureMessage(result: Extract<OfflineWorkResult, { ok: false }>
     case 'invalid':
       return 'El contenido del cambio no es válido.';
   }
-}
-
-function operationDescription(operation: PendingOperation): string {
-  switch (operation.content.action) {
-    case 'start':
-      return 'Inicio de atención';
-    case 'resolve':
-      return `Resolución: ${operation.content.diagnosis}`;
-    case 'comment':
-      return `Nota: ${operation.content.text}`;
-    case 'add_evidence':
-      return `Referencia de foto ${operation.content.evidenceId} (pendiente de subir)`;
-  }
-}
-
-function operationState(operation: PendingOperation): string {
-  switch (operation.state) {
-    case 'pending':
-      return 'pendiente';
-    case 'conflict':
-      return 'en conflicto';
-    case 'rejected':
-      return 'rechazado; requiere una decisión';
-  }
-}
-
-function syncSummary(report: SyncReport): string {
-  const stopped = report.stoppedBy === null ? 'ninguna' : report.stoppedBy;
-  return `Confirmados: ${String(report.confirmed.length)}. Conflictos: ${String(report.conflicts.length)}. Pendientes: ${String(report.pending.length)}. Detención: ${stopped}.`;
 }
 
 export function IncidentDetailScreen({
@@ -302,9 +274,9 @@ export function IncidentDetailScreen({
             <View key={operation.operationId} style={styles.pendingItem} testID={`pending-operation-${operation.operationId}`}>
               <Text>{operationDescription(operation)}</Text>
               <Text>Estado: {operationState(operation)}</Text>
-              {operation.state === 'conflict' ? (
+              {operation.state !== 'pending' ? (
                 <View accessibilityRole="alert" style={styles.conflict}>
-                  <Text>La incidencia fue reasignada y este cambio no se envió. Debes decidir qué hacer.</Text>
+                  <Text>{problemExplanation(operation)}</Text>
                   <View style={styles.actions}>
                     <ActionButton
                       disabled={false}
