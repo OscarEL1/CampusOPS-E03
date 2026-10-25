@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "week": 8,
+  "commitSha": "73844c3216ca90009054798344a906c98c89f98d",
+  "decision": "CampusOps conserva en la cola la intención local, su versión base y su operationId, mientras mantiene intacta la copia remota confirmada. Los cambios independientes se combinan al rebasar la operación sobre la versión nueva; en cambio, assignedTechnicianId y status forman el campo compuesto work, por lo que un inicio local y una reasignación remota requieren resolución explícita. Un conflicto no impone la asignación antigua ni elimina el cambio local: la interfaz informa que no se envió y permite reintentar o descartarlo únicamente por decisión del técnico. Cada reintento reutiliza operationId como Idempotency-Key y la operación sale de la cola sólo después de una confirmación del servidor, incluida una respuesta duplicate.",
+  "alternatives": [
+    "Permitir que gane el último que escribe y sobrescribir la asignación remota con el inicio local. Simplificaría la reconciliación, pero recuperaría una responsabilidad obsoleta y podría permitir que el técnico anterior modificara una incidencia ya reasignada.",
+    "Descartar automáticamente la operación local cuando se detecte un conflicto. Mantendría la asignación remota, pero perdería silenciosamente la intención y el trabajo registrado sin conexión, sin permitir que el técnico decida cómo resolverlo.",
+    "Generar una clave nueva en cada reintento. Evitaría reutilizar identificadores, pero impediría que el servidor reconociera una operación ya aplicada cuando se perdió la respuesta y podría duplicar notas, evidencia o transiciones de estado."
+  ],
+  "tradeoff": "La política elegida añade una cola persistente con estados, comparación contra una base, rebase de cambios compatibles y una interfaz de resolución. A cambio, protege simultáneamente la reasignación confirmada y la intención local, combina cambios independientes y evita efectos duplicados después de respuestas perdidas. Un conflicto permanece bloqueando operaciones posteriores de la misma incidencia hasta una decisión, lo que exige intervención del usuario, pero hace visible el riesgo y evita tanto la sobrescritura como el descarte silencioso.",
+  "requirementIds": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05"],
+  "verification": [
+    {
+      "command": "npm run typecheck",
+      "result": "Código de salida 0; TypeScript terminó sin errores.",
+      "evidence": "La integración por props en App.tsx, la pantalla, los dobles de prueba y los contratos existentes son compatibles con los tipos del proyecto."
+    },
+    {
+      "command": "npm run lint",
+      "result": "Código de salida 0; ESLint terminó sin hallazgos.",
+      "evidence": "La interfaz, la prueba y la documentación agregadas cumplen las reglas configuradas del repositorio."
+    },
+    {
+      "command": "npm run test:sync",
+      "result": "Código de salida 0; 4 suites y 37 pruebas aprobadas.",
+      "evidence": "Pasaron migración y rollback, persistencia de la cola, autorización antes de encolar, conflicto por reasignación, combinación de cambios independientes, reintento idempotente y permanencia de operaciones no confirmadas."
+    },
+    {
+      "command": "npm run test:session",
+      "result": "Código de salida 0; 6 suites y 45 pruebas aprobadas.",
+      "evidence": "La integración local no alteró restauración, renovación, logout, autorización de acciones ni los flujos de técnico y coordinación."
+    },
+    {
+      "command": "npm run test:smoke",
+      "result": "Código de salida 0; 1 suite y 1 prueba aprobada.",
+      "evidence": "CampusOps continuó renderizando y resolviendo el estado del backend después de integrar la API local en App.tsx."
+    },
+    {
+      "command": "npm test -- --ci --runInBand course-tests/offline-work-screen.test.tsx",
+      "result": "Código de salida 0; 1 suite y 3 pruebas aprobadas.",
+      "evidence": "La pantalla conserva un conflicto hasta pulsar Descartar mi cambio, no ofrece el inicio sin conexión a un técnico no asignado y muestra una referencia de foto como pendiente de subir."
+    }
+  ]
+}
