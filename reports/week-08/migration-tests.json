@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "week": 8,
-  "commitSha": "e0f8759d4433db239295679b6109b759f4649886",
-  "generatedAt": "2026-10-23T22:32:46.610172+00:00",
+  "commitSha": "845da173ad630e7d2e7c1028a3f7a8287d414f7c",
+  "generatedAt": "2026-10-25T15:42:47.975642+00:00",
   "status": "pass",
   "checks": [
     {
@@ -305,6 +305,24 @@
           ]
         }
       }
+    },
+    {
+      "id": "interfaz-conflicto-en-detalle",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/offline-work-screen.test.tsx",
+      "evidence": "Detalle de la incidencia con una operacion en conflicto por reasignacion: se explica que el cambio no se envio y solo se descarta al pulsar Descartar mi cambio. Un tecnico no asignado no ve Iniciar sin conexion. Una referencia de foto se muestra como pendiente de subir.",
+      "expected": "conflicto visible, sin descarte automatico, perfil respetado",
+      "observed": "3 de 3 pruebas aprobadas; discard llamado 0 veces antes de pulsar y 1 vez despues; startWork no llamado para technician-2"
+    },
+    {
+      "id": "interfaz-pendientes-sin-lista-en-linea",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/pending-changes-panel.test.tsx",
+      "evidence": "Panel de la pantalla principal con un conflicto de una incidencia que la lista en linea ya no muestra (reasignada) y una nota pendiente; despues sincronizar sin conexion.",
+      "expected": "pendientes y conflicto visibles y decidibles sin la lista en linea; resumen de la sincronizacion",
+      "observed": "3 de 3 pruebas aprobadas; Reintentar y Descartar solo en el cambio con problema; resumen 'Confirmados: 0. Conflictos: 0. Pendientes: 1. Detencion: sin conexion.'; sin cola el panel no se muestra"
     }
   ]
 }
