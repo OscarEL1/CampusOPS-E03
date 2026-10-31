@@ -287,7 +287,12 @@ export function createHttpIncidentGateway(options: HttpIncidentGatewayOptions): 
     const retry = options.retry;
     for (let attempt = 1; ; attempt += 1) {
       const startedAt = now();
-      const outcome = await authorizedExchange(method, path, body, extraHeaders);
+      // A fresh key per attempt, so a retry is never refused as a reused key.
+      const headers =
+        attempt === 1 || extraHeaders['Idempotency-Key'] === undefined
+          ? extraHeaders
+          : { ...extraHeaders, 'Idempotency-Key': `${extraHeaders['Idempotency-Key']}-r${String(attempt)}` };
+      const outcome = await authorizedExchange(method, path, body, headers);
       if (retry === undefined) {
         return outcome;
       }
