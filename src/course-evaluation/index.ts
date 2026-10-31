@@ -7,7 +7,9 @@ import type {
   SyncRecord,
 } from './contracts';
 import type { IncidentLocation } from '../campusops/contracts';
+import { selectIncidentLocation as selectLocation } from '../campusops/domain/incidentLocation';
 import { redactSensitive } from '../campusops/domain/logRedaction';
+import { planRetry as planIncidentRetry } from '../campusops/domain/retryPolicy';
 import { initialRefreshState, reduceSessionEvent } from '../campusops/domain/sessionRefresh';
 import {
   deduplicateOperations as deduplicateQueuedOperations,
@@ -100,14 +102,19 @@ export function deduplicateOperations<T extends Readonly<{ operationId: string }
   return deduplicateQueuedOperations(operations);
 }
 
-export function planRetry(_input: Readonly<{
+/**
+ * Week 09 adapters. planRetry is the policy the incident client and the
+ * geocoding adapters apply with the default limits; selectIncidentLocation is
+ * the rule the location lookup uses on every provider answer.
+ */
+export function planRetry(input: Readonly<{
   method: 'GET' | 'POST';
   status: number | 'timeout';
   attempt: number;
   retryAfterMs?: number;
   idempotencyKey?: string;
 }>): Readonly<{ retry: boolean; delayMs: number; requiresStableIdempotencyKey: boolean }> {
-  return pending('planRetry');
+  return planIncidentRetry(input);
 }
 
 export function reduceRemoteResponses(_input: Readonly<{
@@ -124,6 +131,6 @@ export function reducePermissionLifecycle(
 }
 
 /** Week 09: see docs/CAMPUSOPS_API.md; this is not a completed solution. */
-export function selectIncidentLocation(_provider: unknown, _manualLabel: string): IncidentLocation {
-  return pending('selectIncidentLocation');
+export function selectIncidentLocation(provider: unknown, manualLabel: string): IncidentLocation {
+  return selectLocation(provider, manualLabel);
 }

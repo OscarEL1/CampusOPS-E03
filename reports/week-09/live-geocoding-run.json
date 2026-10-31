@@ -1,0 +1,92 @@
+{
+  "provider": "open-meteo",
+  "endpoint": "https://geocoding-api.open-meteo.com/v1/search",
+  "executedAt": "2026-10-31T15:38:20.191Z",
+  "node": "v24.20.0",
+  "runs": [
+    {
+      "query": "Puebla",
+      "note": "nombre público de ciudad",
+      "result": {
+        "kind": "resolved",
+        "location": {
+          "source": "provider",
+          "label": "Puebla de Zaragoza, Estado de Puebla, México",
+          "latitude": 19.04778,
+          "longitude": -98.20723
+        },
+        "origin": "provider",
+        "fallbackReason": null
+      }
+    },
+    {
+      "query": "  puebla ",
+      "note": "misma consulta normalizada",
+      "result": {
+        "kind": "resolved",
+        "location": {
+          "source": "provider",
+          "label": "Puebla de Zaragoza, Estado de Puebla, México",
+          "latitude": 19.04778,
+          "longitude": -98.20723
+        },
+        "origin": "cache",
+        "fallbackReason": null
+      }
+    },
+    {
+      "query": "Campus Ficticio Zeta 9",
+      "note": "lugar ficticio inexistente",
+      "result": {
+        "kind": "resolved",
+        "location": {
+          "source": "manual",
+          "label": "Edificio Z, zona de prueba"
+        },
+        "origin": "manual",
+        "fallbackReason": "not_found"
+      }
+    }
+  ],
+  "sanitizedLog": [
+    {
+      "event": "geocoding.attempt",
+      "provider": "open-meteo",
+      "attempt": 1,
+      "outcome": "answered",
+      "status": 200,
+      "durationMs": 775,
+      "nextDelayMs": null
+    },
+    {
+      "event": "location.lookup",
+      "provider": "open-meteo",
+      "outcome": "provider",
+      "fallbackReason": null,
+      "durationMs": 776
+    },
+    {
+      "event": "location.lookup",
+      "provider": "open-meteo",
+      "outcome": "cache",
+      "fallbackReason": null,
+      "durationMs": 0
+    },
+    {
+      "event": "geocoding.attempt",
+      "provider": "open-meteo",
+      "attempt": 1,
+      "outcome": "not_found",
+      "status": 200,
+      "durationMs": 181,
+      "nextDelayMs": null
+    },
+    {
+      "event": "location.lookup",
+      "provider": "open-meteo",
+      "outcome": "manual",
+      "fallbackReason": "not_found",
+      "durationMs": 181
+    }
+  ]
+}

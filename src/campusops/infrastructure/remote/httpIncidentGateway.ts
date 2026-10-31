@@ -10,6 +10,7 @@ import type {
   RemoteResult,
 } from '../../domain/incidentGateway';
 import { redactSensitive } from '../../domain/logRedaction';
+import { DEFAULT_RETRY_LIMITS, planRetry, realSleep, type RetryOptions } from '../../domain/retryPolicy';
 import type { AccessTokenSource, SessionCredentials } from '../../domain/session';
 import { toRemoteIncident } from './incidentDto';
 import { inspectRemoteResource, isPlainObject } from './remoteResource';
@@ -50,6 +51,12 @@ export type HttpIncidentGatewayOptions = Readonly<{
   scenario?: string;
   log?: LogSink;
   now?: () => number;
+  /**
+   * Week 09: repeat transient failures as planRetry decides. A POST is only
+   * repeated with its Idempotency-Key and the same body. Absent, every request
+   * is sent once (the week 05 behaviour).
+   */
+  retry?: RetryOptions;
 }>;
 
 export const DEFAULT_TIMEOUT_MS = 8000;
@@ -265,11 +272,77 @@ export function createHttpIncidentGateway(options: HttpIncidentGatewayOptions): 
    * every request that hits 401 at the same time (see sessionRefresh). A POST
    * retry repeats the same Idempotency-Key, so it cannot create a duplicate.
    */
+  /**
+   * Week 09: the exchange repeated as planRetry decides. Each repetition sends
+   * exactly the same method, path, body and Idempotency-Key. Only a timeout, a
+   * 5xx or a 429 can be repeated; a disconnection, a 4xx or a malformed answer
+   * is returned at once. One sanitised entry per attempt is logged.
+   */
   async function exchange(
     method: 'GET' | 'POST',
     path: string,
     body?: string,
     extraHeaders: Readonly<Record<string, string>> = {},
+  ): Promise<Exchange> {
+    const retry = options.retry;
+    for (let attempt = 1; ; attempt += 1) {
+      const startedAt = now();
+      const outcome = await authorizedExchange(method, path, body, extraHeaders);
+      if (retry === undefined) {
+        return outcome;
+      }
+      const failure = outcome.ok ? null : outcome.failure;
+      const signal =
+        failure === null
+          ? null
+          : failure.kind === 'timeout'
+            ? 'timeout'
+            : failure.kind === 'server_error'
+              ? failure.status
+              : failure.kind === 'rate_limited'
+                ? 429
+                : null;
+      const retryAfterMs = failure?.kind === 'rate_limited' && failure.retryAfterMs !== null ? failure.retryAfterMs : undefined;
+      const idempotencyKey = extraHeaders['Idempotency-Key'];
+      const decision =
+        signal === null
+          ? { retry: false, delayMs: 0, requiresStableIdempotencyKey: false }
+          : planRetry(
+              {
+                method,
+                status: signal,
+                attempt,
+                ...(retryAfterMs === undefined ? {} : { retryAfterMs }),
+                ...(idempotencyKey === undefined ? {} : { idempotencyKey }),
+              },
+              retry.limits ?? DEFAULT_RETRY_LIMITS,
+            );
+      try {
+        log(
+          redactSensitive({
+            event: 'incidents.remote.attempt',
+            method,
+            attempt,
+            outcome: failure === null ? 'ok' : failure.kind,
+            durationMs: Math.max(0, now() - startedAt),
+            nextDelayMs: decision.retry ? decision.delayMs : null,
+          }),
+        );
+      } catch {
+        // A failing log sink must never turn a result into an exception.
+      }
+      if (!decision.retry) {
+        return outcome;
+      }
+      await (retry.sleep ?? realSleep)(decision.delayMs);
+    }
+  }
+
+  async function authorizedExchange(
+    method: 'GET' | 'POST',
+    path: string,
+    body: string | undefined,
+    extraHeaders: Readonly<Record<string, string>>,
   ): Promise<Exchange> {
     requestSequence += 1;
     const requestId = `req-${String(requestSequence)}`;

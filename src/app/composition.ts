@@ -1,6 +1,11 @@
 import { createIncidentAssignments, type IncidentAssignments } from '../campusops/application/incidentAssignments';
 import { createIncidentActions, type IncidentActions } from '../campusops/application/incidentActions';
 import { createIncidentQueries, type IncidentQueries } from '../campusops/application/incidentQueries';
+import {
+  createLocationCache,
+  createLocationLookup,
+  type LocationLookup,
+} from '../campusops/application/locationLookup';
 import { createOfflineWork, type OfflineWork } from '../campusops/application/offlineWork';
 import { createSessionManager, type SessionManager } from '../campusops/application/sessionManager';
 import { createSyncEngine, type SyncEngine } from '../campusops/application/syncEngine';
@@ -9,6 +14,8 @@ import {
   type RemoteIncidentQueries,
 } from '../campusops/application/remoteIncidentQueries';
 import type { CampusActor } from '../campusops/domain/accessPolicy';
+import type { GeocodingProvider } from '../campusops/domain/incidentLocation';
+import { DEFAULT_RETRY_LIMITS, realSleep, type RetryOptions } from '../campusops/domain/retryPolicy';
 import type { AuthApi, Clock } from '../campusops/domain/session';
 import type { SessionStore } from '../campusops/domain/sessionStore';
 import { InMemoryIncidentRepository } from '../campusops/infrastructure/inMemoryIncidentRepository';
@@ -16,6 +23,10 @@ import { openExpoSqliteDatabase } from '../campusops/infrastructure/local/expoSq
 import type { SchemaResult } from '../campusops/infrastructure/local/localSchema';
 import type { SqlDatabase } from '../campusops/infrastructure/local/sqlDatabase';
 import { openOfflineStore } from '../campusops/infrastructure/local/sqliteOfflineStore';
+import {
+  createCourseGeocodingProvider,
+  createOpenMeteoGeocodingProvider,
+} from '../campusops/infrastructure/remote/geocodingProviders';
 import { createHttpAuthApi } from '../campusops/infrastructure/remote/httpAuthApi';
 import { createHttpIncidentGateway, type FetchLike } from '../campusops/infrastructure/remote/httpIncidentGateway';
 import { SecureSessionStore } from '../campusops/infrastructure/secureSessionStore';
@@ -51,6 +62,11 @@ export type CampusOpsApp = Readonly<{
    * local storage cannot be opened, so the online app keeps working.
    */
   local(): LocalData | null;
+  /**
+   * Location of an incident (week 09): cache, then the geocoding provider,
+   * and the label the person writes whenever the provider cannot be used.
+   */
+  location: LocationLookup;
 }>;
 
 export type LocalData = Readonly<{
@@ -66,7 +82,16 @@ export type CampusOpsAppOptions = Readonly<{
   baseUrl?: string;
   /** Local SQLite database; the device file by default. Tests pass their own. */
   database?: SqlDatabase;
+  /** Retries of the incident client and the geocoding provider; the published limits by default. */
+  retry?: RetryOptions;
+  /** Geocoding provider; chosen by EXPO_PUBLIC_GEOCODING_PROVIDER by default. */
+  geocodingProvider?: GeocodingProvider;
 }>;
+
+/** Public, not a secret: which geocoding service the build uses. `open-meteo` or the course double. */
+function configuredGeocodingProvider(): string {
+  return process.env.EXPO_PUBLIC_GEOCODING_PROVIDER ?? 'course-double';
+}
 
 export function createCampusOpsApp(
   sessionStore: SessionStore = new SecureSessionStore(),
@@ -82,7 +107,14 @@ export function createCampusOpsApp(
     clock,
   });
   let local: LocalData | null | undefined;
-  const gateway = createHttpIncidentGateway({ baseUrl, session, fetchImpl });
+  const retry: RetryOptions = options.retry ?? { limits: DEFAULT_RETRY_LIMITS, sleep: realSleep };
+  const gateway = createHttpIncidentGateway({ baseUrl, session, fetchImpl, retry });
+  const geocodingProvider =
+    options.geocodingProvider ??
+    (configuredGeocodingProvider() === 'open-meteo'
+      ? createOpenMeteoGeocodingProvider({ fetchImpl, retry })
+      : createCourseGeocodingProvider({ baseUrl, session, fetchImpl, retry }));
+  const location = createLocationLookup({ provider: geocodingProvider, cache: createLocationCache({ clock }), clock });
   return {
     queries: createIncidentQueries(repository),
     assignments: createIncidentAssignments(repository),
@@ -90,6 +122,7 @@ export function createCampusOpsApp(
     session,
     remoteIncidentsFor: (actor) => createRemoteIncidentQueries(gateway, actor),
     incidentActionsFor: (actor) => createIncidentActions(gateway, actor),
+    location,
     local() {
       if (local === undefined) {
         try {

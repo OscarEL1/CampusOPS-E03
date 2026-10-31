@@ -1,0 +1,220 @@
+{
+  "schemaVersion": 1,
+  "week": 9,
+  "commitSha": "2fd65aa4b2c148567ed4cb73e8baa43249cc8fbc",
+  "generatedAt": "2026-10-31T15:44:24.564716+00:00",
+  "status": "pass",
+  "checks": [
+    {
+      "id": "limite-de-intentos",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-policy.test.ts && npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "planRetry no reintenta desde el intento 4; en el doble, un 500 permanente.",
+      "expected": "a lo mas 4 intentos",
+      "observed": {
+        "geocoding500": 4,
+        "post500": 4,
+        "planRetryIntento4": "retry false"
+      }
+    },
+    {
+      "id": "espera-progresiva",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-policy.test.ts && npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Esperas planeadas tras cada intento fallido con los limites por omision (base 250 ms, tope 2000 ms).",
+      "expected": "250, 500, 1000 ms",
+      "observed": {
+        "plannedWaitsMs": [
+          250,
+          500,
+          1000
+        ]
+      }
+    },
+    {
+      "id": "retry-after-respetado",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-policy.test.ts && npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "429 con Retry-After: 1 en el doble; Retry-After de 800 ms en la prueba de la politica; uno mayor que el limite (5000 ms).",
+      "expected": "esperar exactamente lo indicado; no esperar mas que el limite",
+      "observed": {
+        "doubleWaitsMs": [
+          1000,
+          1000,
+          1000
+        ],
+        "planRetry800": 800,
+        "planRetry5001": "retry false"
+      }
+    },
+    {
+      "id": "plazo-por-intento",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Proveedor lento (1200 ms) con plazo del cliente de 300 ms.",
+      "expected": "cada intento termina cerca de 300 ms",
+      "observed": {
+        "durationsMs": [
+          310,
+          310,
+          313,
+          311
+        ],
+        "plannedWaitsMs": [
+          250,
+          500,
+          1000
+        ]
+      }
+    },
+    {
+      "id": "esperas-reales-medidas",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Esperas reales (sin sustituto) con limites configurados base 40 ms y tope 160 ms ante un 500 permanente.",
+      "expected": "cada separacion entre intentos es al menos la espera planeada y el total esta acotado",
+      "observed": {
+        "plannedWaitsMs": [
+          40,
+          80,
+          160
+        ],
+        "observedGapsMs": [
+          55,
+          93,
+          172
+        ],
+        "totalElapsedMs": 320,
+        "limits": {
+          "maxAttempts": 4,
+          "baseDelayMs": 40,
+          "maxDelayMs": 160,
+          "maxRetryAfterMs": 1000
+        }
+      }
+    },
+    {
+      "id": "sin-reintento-de-desconexion-ni-datos",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Desconexion, datos incompletos, coordenadas invalidas y JSON roto.",
+      "expected": "un solo intento en cada caso",
+      "observed": {
+        "network": 1,
+        "incomplete": 1,
+        "invalid_coordinates": 1,
+        "malformed": 1
+      }
+    },
+    {
+      "id": "post-solo-con-clave-estable",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-policy.test.ts && npm test -- --ci --runInBand course-tests/public/week-09.test.ts",
+      "evidence": "planRetry con POST sin clave, con clave corta y con clave estable.",
+      "expected": "sin clave o con clave corta no se repite y lo exige; con clave se repite",
+      "observed": {
+        "sinClave": {
+          "retry": false,
+          "delayMs": 0,
+          "requiresStableIdempotencyKey": true
+        },
+        "claveCorta": {
+          "retry": false,
+          "requiresStableIdempotencyKey": true
+        },
+        "claveEstable": {
+          "retry": true,
+          "delayMs": 250
+        }
+      }
+    },
+    {
+      "id": "sin-duplicados-tras-respuesta-perdida",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Resolucion, cierre, referencia de evidencia y creacion con la respuesta perdida despues de guardar.",
+      "expected": "2 envios con la misma clave y el mismo cuerpo; 1 efecto",
+      "observed": {
+        "resolve": {
+          "posts": [
+            null,
+            200
+          ],
+          "efectos": 1,
+          "waitsMs": [
+            250
+          ]
+        },
+        "close": {
+          "posts": [
+            null,
+            200
+          ],
+          "efectos": 1,
+          "waitsMs": [
+            250
+          ]
+        },
+        "add_evidence": {
+          "posts": [
+            null,
+            200
+          ],
+          "efectos": 1,
+          "waitsMs": [
+            250
+          ]
+        },
+        "create": {
+          "posts": [
+            null,
+            200
+          ],
+          "efectos": 1,
+          "waitsMs": [
+            250
+          ]
+        }
+      }
+    },
+    {
+      "id": "limites-configurables-y-finitos",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-policy.test.ts",
+      "evidence": "Limites configurados (maxAttempts 2, base 100, tope 300) y espera progresiva calculada hasta el intento 200.",
+      "expected": "los limites cambian el comportamiento y ninguna espera supera el tope",
+      "observed": {
+        "maxAttempts2": "retry false en el intento 2",
+        "esperaMaximaHastaIntento200Ms": 2000,
+        "peorCasoPorOmisionMs": 15000,
+        "peorCasoEstrictoMs": 1000
+      }
+    },
+    {
+      "id": "registros-saneados",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-policy.test.ts && npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Registros por intento del cliente de incidencias y del adaptador de geocodificacion, y de la busqueda.",
+      "expected": "intento, resultado, estado y tiempos; nunca token, actor, consulta ni coordenadas",
+      "observed": {
+        "ejemplo": {
+          "attempt": 1,
+          "outcome": "server_error",
+          "status": 500,
+          "nextDelayMs": 250,
+          "durationMs": 1
+        }
+      }
+    }
+  ]
+}
