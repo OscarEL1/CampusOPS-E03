@@ -1,0 +1,382 @@
+{
+  "schemaVersion": 1,
+  "week": 9,
+  "commitSha": "2fd65aa4b2c148567ed4cb73e8baa43249cc8fbc",
+  "generatedAt": "2026-10-31T15:44:24.564716+00:00",
+  "status": "pass",
+  "checks": [
+    {
+      "id": "geocodificacion-success",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Doble controlado del backend con X-Course-Scenario success, a traves del adaptador, el planificador de reintentos y la busqueda con cache.",
+      "expected": "ubicacion del proveedor con coordenadas; la segunda consulta sale de la cache sin solicitud",
+      "observed": {
+        "attempts": 1,
+        "plannedWaitsMs": [],
+        "outcomes": [
+          "answered"
+        ],
+        "result": {
+          "first": "provider",
+          "second": "cache"
+        }
+      }
+    },
+    {
+      "id": "geocodificacion-incomplete",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Doble controlado del backend con X-Course-Scenario incomplete (sin coordenadas), a traves del adaptador, el planificador de reintentos y la busqueda con cache.",
+      "expected": "etiqueta manual, sin coordenadas, sin reintento",
+      "observed": {
+        "attempts": 1,
+        "plannedWaitsMs": [],
+        "outcomes": [
+          "answered"
+        ],
+        "result": {
+          "kind": "resolved",
+          "location": {
+            "source": "manual",
+            "label": "Edificio A, acceso norte"
+          },
+          "origin": "manual",
+          "fallbackReason": "invalid_data"
+        }
+      }
+    },
+    {
+      "id": "geocodificacion-nullable",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Doble controlado del backend con X-Course-Scenario nullable (sin coordenadas), a traves del adaptador, el planificador de reintentos y la busqueda con cache.",
+      "expected": "etiqueta manual, sin coordenadas, sin reintento",
+      "observed": {
+        "attempts": 1,
+        "plannedWaitsMs": [],
+        "outcomes": [
+          "answered"
+        ],
+        "result": {
+          "kind": "resolved",
+          "location": {
+            "source": "manual",
+            "label": "Edificio A, acceso norte"
+          },
+          "origin": "manual",
+          "fallbackReason": "invalid_data"
+        }
+      }
+    },
+    {
+      "id": "geocodificacion-invalid-coordinates",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Doble controlado del backend con X-Course-Scenario invalid_coordinates (latitude 999, longitude null), a traves del adaptador, el planificador de reintentos y la busqueda con cache.",
+      "expected": "etiqueta manual, sin coordenadas inventadas, sin reintento",
+      "observed": {
+        "attempts": 1,
+        "plannedWaitsMs": [],
+        "outcomes": [
+          "answered"
+        ],
+        "result": {
+          "kind": "resolved",
+          "location": {
+            "source": "manual",
+            "label": "Edificio A, acceso norte"
+          },
+          "origin": "manual",
+          "fallbackReason": "invalid_data"
+        }
+      }
+    },
+    {
+      "id": "geocodificacion-malformed",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Doble controlado del backend con X-Course-Scenario malformed (JSON roto), a traves del adaptador, el planificador de reintentos y la busqueda con cache.",
+      "expected": "etiqueta manual por invalid_response, sin reintento",
+      "observed": {
+        "attempts": 1,
+        "plannedWaitsMs": [],
+        "outcomes": [
+          "invalid_response"
+        ],
+        "result": {
+          "kind": "resolved",
+          "location": {
+            "source": "manual",
+            "label": "Edificio A, acceso norte"
+          },
+          "origin": "manual",
+          "fallbackReason": "invalid_response"
+        }
+      }
+    },
+    {
+      "id": "geocodificacion-server-error",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Doble controlado del backend con X-Course-Scenario server_error (500), a traves del adaptador, el planificador de reintentos y la busqueda con cache.",
+      "expected": "4 intentos con esperas 250, 500 y 1000 ms; luego etiqueta manual",
+      "observed": {
+        "attempts": 4,
+        "plannedWaitsMs": [
+          250,
+          500,
+          1000
+        ],
+        "outcomes": [
+          "server_error",
+          "server_error",
+          "server_error",
+          "server_error"
+        ],
+        "result": {
+          "kind": "resolved",
+          "location": {
+            "source": "manual",
+            "label": "Edificio A"
+          },
+          "origin": "manual",
+          "fallbackReason": "server_error"
+        }
+      }
+    },
+    {
+      "id": "geocodificacion-rate-limited",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Doble controlado del backend con X-Course-Scenario rate_limited (429, Retry-After: 1), a traves del adaptador, el planificador de reintentos y la busqueda con cache.",
+      "expected": "Retry-After respetado: esperas de 1000 ms; maximo 4 intentos; luego etiqueta manual",
+      "observed": {
+        "attempts": 4,
+        "plannedWaitsMs": [
+          1000,
+          1000,
+          1000
+        ],
+        "outcomes": [
+          "rate_limited",
+          "rate_limited",
+          "rate_limited",
+          "rate_limited"
+        ],
+        "result": {
+          "kind": "resolved",
+          "location": {
+            "source": "manual",
+            "label": "Edificio A"
+          },
+          "origin": "manual",
+          "fallbackReason": "rate_limited"
+        }
+      }
+    },
+    {
+      "id": "geocodificacion-timeout",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Doble controlado del backend con X-Course-Scenario slow (1200 ms) con plazo del cliente de 300 ms, a traves del adaptador, el planificador de reintentos y la busqueda con cache.",
+      "expected": "cada intento cortado por el plazo; 4 intentos; luego etiqueta manual",
+      "observed": {
+        "attempts": 4,
+        "plannedWaitsMs": [
+          250,
+          500,
+          1000
+        ],
+        "outcomes": [
+          "timeout",
+          "timeout",
+          "timeout",
+          "timeout"
+        ],
+        "result": {
+          "kind": "resolved",
+          "location": {
+            "source": "manual",
+            "label": "Edificio A"
+          },
+          "origin": "manual",
+          "fallbackReason": "timeout"
+        }
+      }
+    },
+    {
+      "id": "geocodificacion-network",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Doble controlado del backend con X-Course-Scenario sin conexion (el transporte rechaza), a traves del adaptador, el planificador de reintentos y la busqueda con cache.",
+      "expected": "sin reintento; etiqueta manual de inmediato",
+      "observed": {
+        "attempts": 1,
+        "plannedWaitsMs": [],
+        "outcomes": [
+          "network"
+        ],
+        "result": {
+          "kind": "resolved",
+          "location": {
+            "source": "manual",
+            "label": "Edificio A"
+          },
+          "origin": "manual",
+          "fallbackReason": "network"
+        }
+      }
+    },
+    {
+      "id": "geocodificacion-sin-etiqueta-manual",
+      "status": "pass",
+      "scenarioType": "boundary",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Sin conexion y sin etiqueta manual escrita.",
+      "expected": "se pide la etiqueta; no se inventa una ubicacion",
+      "observed": {
+        "result": {
+          "kind": "manual_required",
+          "fallbackReason": "network"
+        }
+      }
+    },
+    {
+      "id": "respuesta-perdida-resolve",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "technician-1 ejecuta resolve con X-Course-Scenario timeout_after_commit y plazo del cliente de 400 ms: el servidor guarda y responde a los 1.5 s.",
+      "expected": "el reintento usa la misma clave y el mismo cuerpo; el servidor responde duplicate; un solo evento en el historial; la version sube una vez",
+      "observed": {
+        "postStatuses": [
+          null,
+          200
+        ],
+        "postsWithSameKeyAndBody": 2,
+        "duplicateAnswer": true,
+        "historyEntriesForKey": 1,
+        "versionBefore": 3,
+        "versionAfter": 4
+      }
+    },
+    {
+      "id": "respuesta-perdida-close",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "coordinator-1 ejecuta close con X-Course-Scenario timeout_after_commit y plazo del cliente de 400 ms: el servidor guarda y responde a los 1.5 s.",
+      "expected": "el reintento usa la misma clave y el mismo cuerpo; el servidor responde duplicate; un solo evento en el historial; la version sube una vez",
+      "observed": {
+        "postStatuses": [
+          null,
+          200
+        ],
+        "postsWithSameKeyAndBody": 2,
+        "duplicateAnswer": true,
+        "historyEntriesForKey": 1,
+        "versionBefore": 4,
+        "versionAfter": 5
+      }
+    },
+    {
+      "id": "respuesta-perdida-add-evidence",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "technician-1 ejecuta add_evidence con X-Course-Scenario timeout_after_commit y plazo del cliente de 400 ms: el servidor guarda y responde a los 1.5 s.",
+      "expected": "el reintento usa la misma clave y el mismo cuerpo; el servidor responde duplicate; un solo evento en el historial; la version sube una vez",
+      "observed": {
+        "postStatuses": [
+          null,
+          200
+        ],
+        "postsWithSameKeyAndBody": 2,
+        "duplicateAnswer": true,
+        "historyEntriesForKey": 1,
+        "versionBefore": 3,
+        "versionAfter": 4
+      }
+    },
+    {
+      "id": "respuesta-perdida-creacion",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "reporter-1 crea una incidencia con timeout_after_commit y plazo de 400 ms.",
+      "expected": "una sola incidencia con esa descripcion",
+      "observed": {
+        "postStatuses": [
+          null,
+          200
+        ],
+        "sameKey": true,
+        "plannedWaitsMs": [
+          250
+        ],
+        "incidentsWithThatDescription": 1
+      }
+    },
+    {
+      "id": "post-500-repetido-con-clave",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+      "evidence": "Creacion con server_error (500) en cada intento.",
+      "expected": "4 intentos con la misma clave y nada creado",
+      "observed": {
+        "attempts": 4,
+        "sameKey": true,
+        "plannedWaitsMs": [
+          250,
+          500,
+          1000
+        ],
+        "incidentsCreated": 0
+      }
+    },
+    {
+      "id": "proveedor-real-open-meteo",
+      "status": "pass",
+      "scenarioType": "nominal",
+      "command": "npm run geocoding:live",
+      "evidence": "Ejecucion real contra la API publica de Open-Meteo con el mismo adaptador: un nombre publico de ciudad y un campus ficticio inexistente. Resultado guardado en reports/week-09/live-geocoding-run.json.",
+      "expected": "ciudad resuelta por el proveedor, repeticion servida por la cache, lugar ficticio con etiqueta manual",
+      "observed": {
+        "Puebla": "provider, 200, 1 intento",
+        "  puebla ": "cache, sin solicitud",
+        "Campus Ficticio Zeta 9": "manual, not_found"
+      }
+    },
+    {
+      "id": "falla-01-clave-nueva-por-reintento",
+      "status": "pass",
+      "scenarioType": "failure",
+      "command": "git show d2285975b9acc54b6fbc086e5c7bf3e1fc50bfa7 -- src/campusops/infrastructure/remote/httpIncidentGateway.ts",
+      "evidence": "Falla declarada reproducida en el commit d228597: el reintento de un POST enviaba la clave con un sufijo por intento. npm run typecheck, npm run lint y la prueba publica de la semana 09 salieron 0; solo npm run test:resilience fallo, 5 de 72. Una sola creacion con la respuesta perdida dejo 4 incidencias en el servidor y el cliente informo timeout. Corregido en el commit 2fd65aa. Diagnostico en reports/week-09/failure-01-clave-nueva-por-reintento.log.",
+      "expected": "la falla se detecta y la correccion la elimina",
+      "observed": {
+        "conDefecto": {
+          "test:resilience": "5 de 72 fallidas",
+          "incidenciasCreadas": 4,
+          "resultadoCliente": "timeout"
+        },
+        "corregido": {
+          "test:resilience": "72 de 72",
+          "incidenciasCreadas": 1,
+          "resultadoCliente": "ok, duplicate: true"
+        }
+      }
+    }
+  ]
+}

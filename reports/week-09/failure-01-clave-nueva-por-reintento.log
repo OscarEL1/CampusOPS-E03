@@ -1,0 +1,70 @@
+## Falla declarada: el reintento de un POST cambia la clave de idempotencia en cada intento
+Cambio: exchange() envia a partir del segundo intento la clave original con un sufijo -r<intento>, para que el servidor nunca responda 409 idempotency_key_reused.
+ src/campusops/infrastructure/remote/httpIncidentGateway.ts | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+$ npm run typecheck
+  codigo de salida: 0
+
+$ npm run lint
+  codigo de salida: 0
+
+$ npm test -- --ci --runInBand course-tests/public/week-09.test.ts
+Tests:       4 passed, 4 total
+  codigo de salida: 0
+
+$ npm run test:resilience
+  ● a lost answer after the server saved the change › resolution: the retry repeats the same key and body, the server answers duplicate and applies it once
+    - Expected  - 4
+    + Received  + 1
+  ● a lost answer after the server saved the change › close by coordination: one close event in the history despite the lost answer
+    - Expected  - 4
+    + Received  + 1
+  ● a lost answer after the server saved the change › evidence reference: the same photo reference is stored once
+    - Expected  - 4
+    + Received  + 1
+  ● a lost answer after the server saved the change › creation: a lost answer is retried with the same key and leaves exactly one incident
+    - Expected  - 4
+    + Received  + 1
+  ● a lost answer after the server saved the change › a POST that keeps failing is repeated only with its key, at most 4 times, and creates nothing
+    - Expected  - 3
+    + Received  + 3
+Tests:       5 failed, 67 passed, 72 total
+  codigo de salida: 1
+
+## Detalle del caso de creacion con el defecto
+  ● a lost answer after the server saved the change › creation: a lost answer is retried with the same key and leaves exactly one incident
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 4
+    + Received  + 1
+
+      Object {
+    -   "ok": true,
+    -   "value": Object {
+    -     "duplicate": true,
+    -   },
+    +   "ok": false,
+      }
+
+
+
+## Efecto medido con el defecto (sonda temporal, misma variante timeout_after_commit)
+Una sola llamada a create con el cliente defectuoso: resultado {"ok":false,"failure":{"kind":"timeout","timeoutMs":400}} y 4 incidencias con la misma descripcion en el servidor.
+Cada intento llevo una clave distinta, el servidor no reconocio la repeticion y guardo cada uno; el cliente ademas informo un fallo de algo que se aplico cuatro veces.
+
+Commit de la falla: d2285975b9acc54b6fbc086e5c7bf3e1fc50bfa7
+Commit de la correccion: 2fd65aa4b2c148567ed4cb73e8baa43249cc8fbc
+
+## Resultado corregido
+$ npm run typecheck
+  codigo de salida: 0
+$ npm run lint
+  codigo de salida: 0
+$ npm run test:resilience
+Tests:       72 passed, 72 total
+  codigo de salida: 0
+$ npm test -- --ci --runInBand course-tests/public/week-09.test.ts
+Tests:       4 passed, 4 total
+  codigo de salida: 0
