@@ -358,6 +358,30 @@ describe('a lost answer after the server saved the change', () => {
     expect(history).toHaveLength(1);
   });
 
+  test('creation: a lost answer is retried with the same key and leaves exactly one incident', async () => {
+    const sent: Sent[] = [];
+    const recorder = recordingSleep();
+    const gateway = createHttpIncidentGateway({
+      baseUrl,
+      session: reporter.app.session,
+      fetchImpl: transport(sent),
+      scenario: 'timeout_after_commit',
+      timeoutMs: 400,
+      retry: { sleep: recorder.sleep },
+    });
+    const description = `Fuga ficticia con respuesta perdida ${newIdempotencyKey()}`;
+    const key = newIdempotencyKey();
+    const result = await gateway.create({ category: 'water', description, location: 'Aula de prueba 9' }, key);
+    expect(result).toMatchObject({ ok: true, value: { duplicate: true } });
+    expect(sent.map((call) => [call.status, call.key])).toEqual([[null, key], [200, key]]);
+    const listed = await reporter.app.remoteIncidentsFor(REPORTER).list();
+    const copies = listed.ok
+      ? listed.value.filter((item) => item.kind === 'available' && item.incident.description === description)
+      : [];
+    expect(copies).toHaveLength(1);
+    metrics['lost-answer:create'] = { postStatuses: sent.map((call) => call.status), sameKey: sent.every((call) => call.key === key), plannedWaitsMs: recorder.waits, incidentsWithThatDescription: copies.length };
+  });
+
   test('a POST that keeps failing is repeated only with its key, at most 4 times, and creates nothing', async () => {
     const sent: Sent[] = [];
     const recorder = recordingSleep();
