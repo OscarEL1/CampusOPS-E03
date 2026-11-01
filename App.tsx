@@ -131,7 +131,11 @@ function SignedInHome({ app, actor }: Readonly<{ app: CampusOpsApp; actor: Campu
         </Pressable>
       ) : null}
       {creatingIncident ? (
-        <CreateIncidentScreen create={remoteIncidents.create} onBack={() => setCreatingIncident(false)} />
+        <CreateIncidentScreen
+          create={remoteIncidents.create}
+          lookup={app.location.lookup}
+          onBack={() => setCreatingIncident(false)}
+        />
       ) : null}
       {!creatingIncident && list.phase === 'loading' ? <Text testID="incidents-loading">Cargando incidencias…</Text> : null}
       {!creatingIncident && list.phase === 'failed' ? (
