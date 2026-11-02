@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "week": 9,
+  "teamId": "Equipo-03",
+  "note": "El equipo esta integrado por dos personas. El profesor autorizo de forma explicita trabajar y entregar en equipo de dos para esta actividad. El contrato de evidencias exige exactamente tres registros en members, por lo que esa comprobacion de esquema falla de forma conocida y declarada; ocurre desde la semana 01. No se agrego un tercer integrante porque la guia de entrega prohibe identidades inventadas o compartidas. Los dos registros siguientes corresponden a personas reales con su identidad Git registrada.",
+  "members": [
+    {
+      "studentId": "a3523110665",
+      "commitShas": [
+        "b0cba3c9ba471232e15333f147daf4c757fbe2e6",
+        "7dcbc36fdbda2edd89b6f4dbb787784d3f2849c3",
+        "e03cab22ce801a125cf40bf98ce04e5a0460fc78",
+        "90497264ba4cbcbc3cdf69f80f87935d1e00ef73",
+        "76a8f7baabd4b0945c31e3a128eb0a693f25ec7f",
+        "b87df907617e771e4fea9935c4f2ea4fca5498a5",
+        "4d9f59aa4ac8c0dfd03f7837ffc42a21c3091741",
+        "d24e20a71a43eba6c7dbe564c9ad085d8365aba0",
+        "d2285975b9acc54b6fbc086e5c7bf3e1fc50bfa7",
+        "2fd65aa4b2c148567ed4cb73e8baa43249cc8fbc",
+        "4fd9083f4bff79f7b92bc6f2749e93af6c804297"
+      ],
+      "files": [
+        ".github/workflows/week-09-integracion-resiliente-feedback.yml",
+        "src/campusops/domain/retryPolicy.ts",
+        "src/campusops/domain/incidentLocation.ts",
+        "src/campusops/application/locationLookup.ts",
+        "src/campusops/infrastructure/remote/geocodingProviders.ts",
+        "src/campusops/infrastructure/remote/httpIncidentGateway.ts",
+        "src/app/composition.ts",
+        "src/course-evaluation/index.ts",
+        ".env.example",
+        "package.json",
+        "course-tests/resilience-policy.test.ts",
+        "course-tests/resilience-backend.test.ts",
+        "course-tests/live/open-meteo.live.test.ts",
+        "reports/week-09/fault-injection.json",
+        "reports/week-09/retry-metrics.json",
+        "reports/week-09/live-geocoding-run.json",
+        "reports/week-09/failure-01-clave-nueva-por-reintento.log"
+      ],
+      "tests": [
+        "npm run test:resilience",
+        "npm test -- --ci --runInBand course-tests/resilience-policy.test.ts",
+        "npm test -- --ci --runInBand course-tests/resilience-backend.test.ts",
+        "npm run geocoding:live",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run audit:ci",
+        "npm run backend:self-test",
+        "npm run test:sync",
+        "npm run test:session",
+        "npm run test:cloud",
+        "npm test -- --ci --runInBand course-tests/public/week-09.test.ts"
+      ],
+      "reviews": [
+        "Rama feat/alejandro-week09-location-ui, integrada en el pull request #17: revise el selector de ubicacion de CreateIncidentScreen.tsx, su prueba location-picker.test.tsx, docs/resilience-policy.md y engineering.json, y ejecute sobre su commit 91fbbb2 typecheck, lint, test:resilience (75 de 75), test:sync (43), test:session (45), test:cloud (98), test:security (12), test:negative (13), smoke y la prueba de fronteras de arquitectura. Comprobe que los nombres de prueba citados en la politica existen en resilience-policy.test.ts. Senale un detalle menor que no se corrigio en esta entrega: si se edita la consulta mientras una busqueda sigue en curso, el resultado anterior reemplaza el estado editado."
+      ],
+      "prediction": "Si el reintento de un POST cambia la clave de idempotencia en cada intento, una respuesta perdida despues de guardar se convierte en varias operaciones distintas para el servidor. Esperaba que ni el compilador, ni el linter, ni la prueba publica de la semana 09 lo detectaran, porque esa prueba solo cubre planRetry y selectIncidentLocation como funciones puras y no cuenta efectos en el servidor.",
+      "command": "npm run test:resilience",
+      "observedResult": "75 pruebas aprobadas con codigo de salida 0 sobre el commit db26fb666cf8f0d15a5a0ed2790ebd5e6922703f, incluidas 18 contra el backend didactico real: 4 intentos con esperas de 250, 500 y 1000 ms ante un 500, Retry-After de 1000 ms respetado ante un 429, intentos cortados cerca de 300 ms por el plazo y una sola incidencia o un solo evento por operacion con la respuesta perdida. La falla declarada se reprodujo en d228597: typecheck, lint y la prueba publica salieron 0, mientras test:resilience fallo 5 de 72; una sola creacion dejo 4 incidencias en el servidor y el cliente informo timeout. Corregido en 2fd65aa.",
+      "explanation": "Implemente planRetry como politica real con limites configurables: maximo 4 intentos, espera progresiva con tope, Retry-After acotado, sin reintento ante desconexion, 4xx o datos invalidos, y POST solo con una clave estable. La use en el cliente de incidencias, que repite timeout, 5xx y 429 con la misma clave y el mismo cuerpo, y en dos adaptadores de geocodificacion, el doble del curso y Open-Meteo, con plazo por intento y registros saneados. Agregue selectIncidentLocation, que nunca inventa coordenadas, la cache LRU con caducidad y la busqueda con alternativa manual, una ejecucion real contra Open-Meteo y las pruebas de respuesta perdida despues de guardar."
+    },
+    {
+      "studentId": "AlexD39",
+      "commitShas": [
+        "93ca47908cbc8bd12f99c250fb1787fc68b4fd65",
+        "91fbbb2490c223fff62d19b5ff571c529ab91e76"
+      ],
+      "files": [
+        "src/campusops/ui/CreateIncidentScreen.tsx",
+        "App.tsx",
+        "course-tests/location-picker.test.tsx",
+        "package.json",
+        "docs/resilience-policy.md",
+        "evidence/week-09/engineering.json"
+      ],
+      "tests": [
+        "npm test -- --ci --runInBand course-tests/location-picker.test.tsx",
+        "npm run test:resilience",
+        "npm run test:sync",
+        "npm run typecheck",
+        "npm run lint",
+        "npm run test:smoke"
+      ],
+      "reviews": [],
+      "prediction": "Si el servicio de ubicacion falla, la pantalla no debe bloquear el registro ni mostrar coordenadas: tiene que conservar la etiqueta escrita por la persona y explicar el motivo, y si no hay etiqueta debe pedirla antes de crear la incidencia.",
+      "command": "npm test -- --ci --runInBand course-tests/location-picker.test.tsx",
+      "observedResult": "3 pruebas aprobadas con codigo de salida 0. Un resultado del proveedor muestra Ubicacion encontrada con sus coordenadas y la incidencia se crea con esa etiqueta. Tras un timeout se muestra que se usara lo que escribio la persona, con el motivo, y no aparecen coordenadas. Con manual_required se pide edificio, zona o referencia y create no se llama.",
+      "explanation": "Implemente el selector de ubicacion en el formulario de creacion: un campo de consulta, un campo manual y el boton Buscar ubicacion, que indica si el resultado vino del proveedor, de la cache o de la etiqueta manual y explica el motivo de la alternativa en espanol. Las coordenadas solo se muestran con una ubicacion del proveedor y la incidencia se envia con location.label. Lo conecte en App.tsx con app.location.lookup. Escribi docs/resilience-policy.md con el proveedor, la cache, la alternativa manual y las reglas ligadas a sus pruebas, y la decision de ingenieria sobre cuando reintentar, continuar con una alternativa o informar el fallo."
+    }
+  ]
+}

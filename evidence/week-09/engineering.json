@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "week": 9,
-  "commitSha": "93ca47908cbc8bd12f99c250fb1787fc68b4fd65",
+  "commitSha": "db26fb666cf8f0d15a5a0ed2790ebd5e6922703f",
   "decision": "CampusOps reintenta únicamente fallos que pueden ser transitorios: timeout y estados 408, 429, 500, 502, 503 o 504. Cada operación tiene como máximo cuatro intentos, esperas progresivas finitas y un Retry-After acotado; un POST sólo se repite con la misma clave de idempotencia y el mismo contenido. Cuando falla la geocodificación, continuar es más útil y seguro que bloquear la incidencia: se conserva la etiqueta manual sin inventar coordenadas, o se solicita edificio, zona o referencia si todavía está vacía. La aplicación informa que la operación falló cuando el error no es transitorio, falta una identidad estable para repetir un POST, se agota el límite o la espera solicitada supera el máximo. Así se distingue indisponibilidad temporal, degradación con una alternativa válida y fallo definitivo visible.",
   "alternatives": [
     "Reintentar siempre sin límite. Podría superar una indisponibilidad larga sin intervención, pero crea bucles, esperas ilimitadas y exceso de solicitudes; además bloquea la incidencia aunque exista una ubicación manual suficiente.",
