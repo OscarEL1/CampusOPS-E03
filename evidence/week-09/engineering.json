@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "week": 9,
+  "commitSha": "93ca47908cbc8bd12f99c250fb1787fc68b4fd65",
+  "decision": "CampusOps reintenta únicamente fallos que pueden ser transitorios: timeout y estados 408, 429, 500, 502, 503 o 504. Cada operación tiene como máximo cuatro intentos, esperas progresivas finitas y un Retry-After acotado; un POST sólo se repite con la misma clave de idempotencia y el mismo contenido. Cuando falla la geocodificación, continuar es más útil y seguro que bloquear la incidencia: se conserva la etiqueta manual sin inventar coordenadas, o se solicita edificio, zona o referencia si todavía está vacía. La aplicación informa que la operación falló cuando el error no es transitorio, falta una identidad estable para repetir un POST, se agota el límite o la espera solicitada supera el máximo. Así se distingue indisponibilidad temporal, degradación con una alternativa válida y fallo definitivo visible.",
+  "alternatives": [
+    "Reintentar siempre sin límite. Podría superar una indisponibilidad larga sin intervención, pero crea bucles, esperas ilimitadas y exceso de solicitudes; además bloquea la incidencia aunque exista una ubicación manual suficiente.",
+    "No reintentar nunca. Reduce solicitudes y simplifica el cliente, pero convierte timeouts, 429 y errores temporales recuperables en fallos inmediatos y desaprovecha Retry-After incluso en lecturas idempotentes.",
+    "Generar una clave nueva en cada reintento. Evita reutilizar identificadores, pero es la falla declarada: la sonda produjo cuatro incidencias en el servidor por una sola creación, porque cada intento pareció una operación distinta y no pudo deduplicarse."
+  ],
+  "tradeoff": "La política elegida añade clasificación de fallos, límites configurables, espera progresiva, conservación de una clave estable, caché y estados visibles en el selector de ubicación. A cambio evita reintentos infinitos y efectos duplicados, respeta la señal del proveedor y mantiene útil el formulario con una etiqueta manual. Se acepta que un fallo transitorio pueda terminar después del cuarto intento y que la alternativa manual pierda coordenadas: el límite protege al proveedor y la etiqueta de texto satisface el contrato real del backend sin fingir precisión. Las pruebas controladas cubren éxito, caché, timeout, 429, desconexión, datos inválidos, respuesta perdida y ausencia de duplicados.",
+  "requirementIds": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05"],
+  "verification": [
+    {
+      "command": "npm run typecheck",
+      "result": "Código de salida 0; TypeScript terminó sin errores.",
+      "evidence": "La función lookup pasada desde App.tsx, los estados del selector, el resultado discriminado y el envío de location.label son compatibles con los contratos existentes."
+    },
+    {
+      "command": "npm run lint",
+      "result": "Código de salida 0; ESLint terminó sin hallazgos.",
+      "evidence": "La pantalla, la prueba nueva y los archivos acumulados cumplen las reglas configuradas del repositorio."
+    },
+    {
+      "command": "npm run test:resilience",
+      "result": "Código de salida 0; 4 suites y 75 pruebas aprobadas.",
+      "evidence": "Pasaron la política pura, los fallos controlados del backend, la prueba pública y los tres casos de interfaz: proveedor, timeout con etiqueta manual y manual_required sin creación."
+    },
+    {
+      "command": "npm run test:sync",
+      "result": "Código de salida 0; 6 suites y 43 pruebas aprobadas.",
+      "evidence": "La incorporación del selector no alteró la cola, persistencia, sincronización, conflictos ni paneles de cambios pendientes de la semana 08."
+    },
+    {
+      "command": "npm run test:smoke",
+      "result": "Código de salida 0; 1 suite y 1 prueba aprobada.",
+      "evidence": "CampusOps continuó renderizando y resolviendo el estado del backend después de pasar app.location.lookup por props."
+    }
+  ]
+}
